@@ -1,5 +1,6 @@
 from ldap_ops import get_ldap_connection, add_user, disable_user, delete_user
 from db_ops import get_db_connection, sync_ldap_to_postgres
+from computer_ops import assign_computer_to_department, list_computers_by_department
 
 # LDAP ve PostgreSQL bağlantılarını başlat
 conn_ldap = get_ldap_connection()
@@ -14,9 +15,10 @@ print("1) Kullanıcı devre dışı bırakma")
 print("2) Kullanıcıyı devreye alma")
 print("3) Kullanıcı silme")
 print("4) Kullanıcı ekleme")
+print("5) Bilgisayar işlemleri")
 
 # Seçimi al
-secim = input("Seçiminizi yapın (1, 2, 3 veya 4): ")
+secim = input("Seçiminizi yapın (1, 2, 3, 4 veya 5): ")
 
 # Kullanıcıyı devre dışı bırak
 if secim == "1":
@@ -61,6 +63,33 @@ elif secim == "4":
         """, (username, status))
         conn_db.commit()
         print(f"✅ Kullanıcı PostgreSQL'e eklendi: {username} ({status})")
+
+# Bilgisayar işlemleri alt menüsü
+elif secim == "5":
+    while True:
+        print("\n📁 Bilgisayar İşlemleri Menüsü")
+        print("1) Bilgisayarı departmana ata")
+        print("2) Belirli bir departmandaki bilgisayarları listele")
+        print("3) Geri dön")
+
+        alt_secim = input("Seçiminizi yapın: ")
+
+        if alt_secim == "1":
+            computer_name = input("Bilgisayarın adını girin: ")
+            print("Departmanlar: muhasebe, IT, İK, yönetim, idari işler")
+            department = input("Bilgisayarı atamak istediğiniz departmanı girin: ")
+            assign_computer_to_department(conn_db, computer_name, department)
+
+        elif alt_secim == "2":
+            print("Departmanlar: muhasebe, IT, İK, yönetim, idari işler")
+            department = input("Listelemek istediğiniz departmanı girin: ")
+            list_computers_by_department(conn_db, department)
+
+        elif alt_secim == "3":
+            break
+
+        else:
+            print("❌ Geçersiz seçim. Lütfen 1, 2 ya da 3 girin.")
 
 # Geçersiz seçim
 else:
