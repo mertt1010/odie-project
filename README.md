@@ -1,4 +1,6 @@
-ODIE - LDAP ve Supabase Kullanıcı Yönetimi Aracı
+
+
+🧠 ODIE - LDAP ve Supabase Kullanıcı Yönetimi Aracı
 Bu proje, bir Active Directory (LDAP) ortamındaki kullanıcıların yönetilmesini ve bu kullanıcıların Supabase veritabanıyla senkronize edilmesini sağlayan bir Python uygulamasıdır.
 
 🎯 Amaç
