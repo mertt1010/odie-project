@@ -1,39 +1,45 @@
-# 🧠 ODIE - LDAP ve PostgreSQL Senkronizasyon ve Kullanıcı Yönetimi Aracı
+ODIE - LDAP ve Supabase Kullanıcı Yönetimi Aracı
+Bu proje, bir Active Directory (LDAP) ortamındaki kullanıcıların yönetilmesini ve bu kullanıcıların Supabase veritabanıyla senkronize edilmesini sağlayan bir Python uygulamasıdır.
 
-Bu proje, bir Active Directory (LDAP) ortamındaki kullanıcı ve bilgisayar verilerini PostgreSQL veritabanı ile senkronize eden ve temel kullanıcı işlemlerini gerçekleştirebilen bir Python uygulamasıdır.
+🎯 Amaç
+ODIE, sistem yöneticilerine:
 
-## 🎯 Amaç
+LDAP üzerinde kullanıcı ekleme, silme, devre dışı bırakma, aktifleştirme işlemleri yapma,
 
-ODIE, sistem yöneticilerinin:
-- LDAP (Active Directory) üzerinden kullanıcı **ekleme**, **silme**, **devre dışı bırakma**, **aktif etme**
-- LDAP'teki kullanıcı ve bilgisayar listesini **PostgreSQL veritabanı ile senkronize etme**
+LDAP üzerindeki kullanıcıları Supabase PostgreSQL veritabanı ile senkronize etme
 
-gibi işlemleri terminal arayüzü üzerinden hızlıca yapmasını sağlar.
+imkanı sunar. Tüm işlemler bir terminal menüsü üzerinden kolayca yönetilir.
 
----
+⚙️ Özellikler
+✅ LDAP → Supabase Senkronizasyonu
 
-## ⚙️ Özellikler
+LDAP'te bulunan tüm kullanıcılar alınır.
 
-✅ **LDAP → PostgreSQL Senkronizasyonu**  
-- Tüm kullanıcılar (`objectClass=user`) ve bilgisayarlar (`objectClass=computer`) alınır  
-- PostgreSQL'deki `usernames` ve `computers` tablolarına kaydedilir  
-- Veriler güncel tutulur
+Supabase üzerindeki users tablosu ile eşitlenir (ekleme/güncelleme).
 
-✅ **Kullanıcı Ekleme**  
-- Yeni kullanıcıyı önce devre dışı olarak LDAP’e ekler  
-- Şifre atanabilirse hesabı aktif hale getirir  
-- Hangi durumda olursa olsun PostgreSQL'e statüsüyle birlikte ekler
+✅ Kullanıcı Ekleme
 
-✅ **Kullanıcıyı Devre Dışı Bırakma / Aktif Etme**  
-- LDAP'te `userAccountControl` alanı güncellenir  
-- PostgreSQL'deki karşılığı da senkronize edilir  
-- Zaten devre dışıysa/aktifse tekrar işlem yapmaz
+LDAP üzerine yeni kullanıcı eklenir (önce devre dışı olarak).
 
-✅ **Kullanıcı Silme**  
-- LDAP üzerinden kullanıcıyı siler  
-- Eş zamanlı olarak PostgreSQL'deki kaydı da temizler
+Şifre ataması yapılır ve kullanıcı aktif hale getirilir.
 
----
+Supabase veritabanına da kullanıcı bilgisi kaydedilir.
+
+✅ Kullanıcı Devre Dışı Bırakma / Aktifleştirme
+
+LDAP üzerindeki kullanıcı durumu değiştirilir.
+
+Aynı işlem Supabase üzerinde de güncellenir.
+
+✅ Kullanıcı Silme
+
+LDAP'ten kullanıcı silinir.
+
+Supabase veritabanından da ilgili kayıt temizlenir.
+
+✅ Terminal Üzerinden Menü
+
+Basit ve kullanıcı dostu bir terminal menüsü ile tüm işlemler yönetilir.
 
 ## 🗃️ Dosya Yapısı
 
@@ -42,4 +48,5 @@ odie-project/
 ├── main.py              # Ana program arayüzü
 ├── config.py            # Bağlantı ayarları
 ├── ldap_ops.py          # LDAP işlemleri (ekle, sil, devre dışı bırak vb.)
-├── db_ops.py            # PostgreSQL işlemleri ve senkronizasyon
+├── db_ops.py
+├── user_ops.py
