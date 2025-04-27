@@ -47,7 +47,6 @@ def sync_ldap_users_to_supabase(conn_db, conn_ldap):
                     last_name = EXCLUDED.last_name,
                     password = EXCLUDED.password,
                     role_id = EXCLUDED.role_id,
-                    department_id = EXCLUDED.department_id,
                     status = EXCLUDED.status
             """
             cursor.execute(insert_query, (username, password, first_name, last_name, role_id, department_id, status))
@@ -57,3 +56,27 @@ def sync_ldap_users_to_supabase(conn_db, conn_ldap):
     except Exception as e:
         print("❌ Senkronizasyon hatası:", e)
         conn_db.rollback()
+
+def get_users_by_department(department_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, username, first_name, last_name, role_id, department_id, status
+        FROM users
+        WHERE department_id = %s
+    """, (department_id,))
+    users = cursor.fetchall()
+    conn.close()
+    return users
+
+def get_users_by_role(role_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, username, first_name, last_name, role_id, department_id, status
+        FROM users
+        WHERE role_id = %s
+    """, (role_id,))
+    users = cursor.fetchall()
+    conn.close()
+    return users
