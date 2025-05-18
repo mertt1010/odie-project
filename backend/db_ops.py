@@ -1,5 +1,11 @@
 import psycopg2
-from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+
+# db_ops.py
+DB_NAME = 'postgres'
+DB_USER = 'postgres'
+DB_PASSWORD = 'gjM1ePvLQlLLlYZ4'
+DB_HOST = 'db.zdgklkzmqwkkczhqishq.supabase.co'
+DB_PORT = '5432'
 
 def get_db_connection():
     try:
