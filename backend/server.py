@@ -56,3 +56,31 @@ def api_enable_user(user: UserDisableRequest):
 def api_delete_user(user: UserDeleteRequest):
     success = delete_user(user.domain_id, user.username)
     return {"success": success}
+
+from fastapi import Body
+from db_ops import get_db_connection
+
+@app.post("/list_users_by_department")
+def list_users_by_department(department: dict = Body(...)):
+    try:
+        department_id = department["department_id"]
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, first_name, last_name FROM users WHERE department_id = %s", (department_id,))
+        users = cursor.fetchall()
+        conn.close()
+
+        return {
+            "success": True,
+            "users": [
+                {
+                    "id": u[0],
+                    "username": u[1],
+                    "first_name": u[2],
+                    "last_name": u[3]
+                }
+                for u in users
+            ]
+        }
+    except Exception as e:
+        return {"success": False, "message": f"Hata: {e}"}

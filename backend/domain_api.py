@@ -149,7 +149,7 @@ def list_departments():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, department_name FROM departments ORDER BY department_name")
+        cursor.execute("SELECT id, name FROM departments ORDER BY name")
         departments = cursor.fetchall()
         conn.close()
         
