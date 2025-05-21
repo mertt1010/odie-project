@@ -1,8 +1,6 @@
 import psycopg2
 import os
-from dotenv import load_dotenv
 
-load_dotenv()  # .env dosyasını yükle
 
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
