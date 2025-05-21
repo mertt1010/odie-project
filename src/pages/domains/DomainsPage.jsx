@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import OutletHeader from "../../components/outlet-header/OutletHeader";
 import mockDomains from "../../test/domains.json";
 
 function DomainsPage() {
   const [domains, setDomains] = useState([]);
+  const [filteredDomains, setFilteredDomains] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [passwordVisibility, setPasswordVisibility] = useState({});
 
   useEffect(() => {
     // Load domains from mock data
     setDomains(mockDomains);
+    setFilteredDomains(mockDomains);
 
     // Initialize password visibility state
     const initialVisibility = {};
@@ -20,6 +22,29 @@ function DomainsPage() {
 
     setLoading(false);
   }, []);
+
+  // Filter domains based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredDomains(domains);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase();
+    const results = domains.filter(
+      (domain) =>
+        domain.name.toLowerCase().includes(term) ||
+        domain.ip.toLowerCase().includes(term) ||
+        domain.ldap_user.toLowerCase().includes(term) ||
+        domain.domain_type.toLowerCase().includes(term)
+    );
+
+    setFilteredDomains(results);
+  }, [searchTerm, domains]);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
   const togglePasswordVisibility = (id) => {
     setPasswordVisibility((prev) => ({
@@ -35,11 +60,27 @@ function DomainsPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
-      <OutletHeader header="Domains" />
-
+      <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
+        Domains
+        <div className="flex items-center">
+          <button className="bg-transparent text-[16px] font-medium text-odie rounded-md mr-6 hover:text-gray-600 cursor-pointer">
+            <i className="bi bi-plus-lg"></i> Add Domain
+          </button>
+          <div className="flex items-center justify-between w-[300px] mr-6 px-3 py-2 bg-white rounded-md border border-gray-300">
+            <input
+              type="text"
+              placeholder="Search by domain name"
+              className="bg-transparent text-[16px] font-normal w-[90%] text-gray-800 outline-none"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <i className="bi bi-search text-[16px]"></i>
+          </div>
+        </div>
+      </div>
       {loading ? (
         <p>Loading...</p>
-      ) : (
+      ) : filteredDomains.length > 0 ? (
         <div className="bg-white rounded-lg shadow-md overflow-hidden m-6">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -89,7 +130,7 @@ function DomainsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {domains.map((domain) => (
+              {filteredDomains.map((domain) => (
                 <tr key={domain.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
                     {domain.name}
@@ -149,6 +190,10 @@ function DomainsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        <div className="m-6 bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+          No domains found matching your search.
         </div>
       )}
     </div>
