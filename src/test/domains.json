@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "example.com",
+    "ip": "192.168.1.100",
+    "ldap_user": "admin",
+    "ldap_password": "Pa$$w0rd123",
+    "domain_type": "Windows Server",
+    "status": "online"
+  },
+  {
+    "id": 2,
+    "name": "company.local",
+    "ip": "10.0.0.25",
+    "ldap_user": "ldapadmin",
+    "ldap_password": "SecureADPass!",
+    "domain_type": "Windows Server",
+    "status": "online"
+  },
+  {
+    "id": 3,
+    "name": "test.internal",
+    "ip": "172.16.50.10",
+    "ldap_user": "sysadmin",
+    "ldap_password": "Test123!@#",
+    "domain_type": "Samba",
+    "status": "connection error"
+  }
+]

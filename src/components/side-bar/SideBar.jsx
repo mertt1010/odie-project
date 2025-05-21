@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import odieIcon from "../../assets/img/icon.png";
 import { useAuth } from "../../context/AuthContext";
@@ -26,34 +25,25 @@ function SideBar() {
       </div>
       <div className="links flex flex-col flex-grow">
         <Link
-          to="/"
-          className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300"
-        >
-          <i
-            className={`${isActive("/") ? "bi bi-house-fill" : "bi bi-house"}`}
-          ></i>
-        </Link>
-
-        <Link
-          to="/example-page-one"
-          className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300"
+          to="/domains"
+          className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300 hover:bg-gray-100"
         >
           <i
             className={`${
-              isActive("/example-page-one") ? "bi bi-moon-fill" : "bi bi-moon"
+              isActive("/") || isActive("/domains")
+                ? "bi bi-hdd-network-fill"
+                : "bi bi-hdd-network"
             }`}
           ></i>
         </Link>
 
         <Link
-          to="/example-page-two"
-          className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300"
+          to="/users"
+          className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300 hover:bg-gray-100"
         >
           <i
             className={`${
-              isActive("/example-page-two")
-                ? "bi bi-lightning-fill"
-                : "bi bi-lightning"
+              isActive("/users") ? "bi bi-people-fill" : "bi bi-people"
             }`}
           ></i>
         </Link>
@@ -63,7 +53,7 @@ function SideBar() {
         <div className="mt-auto border-t border-gray-300">
           <button
             onClick={handleLogout}
-            className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center"
+            className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center hover:bg-gray-100 cursor-pointer"
             title="Logout"
           >
             <i className="bi bi-box-arrow-right"></i>

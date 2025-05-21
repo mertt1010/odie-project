@@ -1,0 +1,73 @@
+[
+  {
+    "id": 1,
+    "name": "example.com",
+    "ip": "192.168.1.100",
+    "users": [
+      {
+        "id": 101,
+        "username": "jdoe",
+        "password": "User123!",
+        "firstName": "John",
+        "lastName": "Doe",
+        "department": "IT",
+        "role": "Administrator",
+        "status": "active"
+      },
+      {
+        "id": 102,
+        "username": "msmith",
+        "password": "Pass456@",
+        "firstName": "Mary",
+        "lastName": "Smith",
+        "department": "HR",
+        "role": "User",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "company.local",
+    "ip": "10.0.0.25",
+    "users": [
+      {
+        "id": 201,
+        "username": "bjohnson",
+        "password": "Secure789#",
+        "firstName": "Bob",
+        "lastName": "Johnson",
+        "department": "Finance",
+        "role": "User",
+        "status": "active"
+      },
+      {
+        "id": 202,
+        "username": "agarcia",
+        "password": "Garcia123$",
+        "firstName": "Ana",
+        "lastName": "Garcia",
+        "department": "Marketing",
+        "role": "User",
+        "status": "inactive"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "test.internal",
+    "ip": "172.16.50.10",
+    "users": [
+      {
+        "id": 301,
+        "username": "testadmin",
+        "password": "TestAdmin!23",
+        "firstName": "Test",
+        "lastName": "Admin",
+        "department": "Development",
+        "role": "Administrator",
+        "status": "active"
+      }
+    ]
+  }
+]
