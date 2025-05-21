@@ -7,9 +7,9 @@ import json
 # API endpoint sabitleri
 API_BASE_URL = "http://localhost:8000"  # API sunucu adresi
 
-def list_domains():
+def list_domains(current_user_id):
     try:
-        response = requests.get(f"{API_BASE_URL}/list_domains")
+        response = requests.get(f"{API_BASE_URL}/list_domains", params={"user_id": current_user_id})
         if response.status_code == 200:
             data = response.json()
             domains = [(d["id"], d["domain_name"]) for d in data["domains"]]
@@ -19,17 +19,11 @@ def list_domains():
             return []
     except Exception as e:
         print(f"❌ Bağlantı hatası: {e}")
-        # API'ye erişilemezse yedek olarak doğrudan veritabanından oku
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, domain_name FROM domains")
-        domains = cursor.fetchall()
-        conn.close()
-        return domains
+        return []
 
-def select_domain():
+def select_domain(current_user_id):
     print("🌐 Kullanılabilir Domainler:")
-    domains = list_domains()
+    domains = list_domains(current_user_id)
     if not domains:
         print("❌ Listelenecek domain bulunamadı.")
         return None
@@ -39,7 +33,7 @@ def select_domain():
     domain_id = int(input("🆔 Domain ID seçin: "))
     return domain_id
 
-def add_domain_api():
+def add_domain_api(current_user_id):
     print("\n🏢 Yeni Domain Ekleme")
     domain_name = input("Domain Adı: ")
     domain_ip = input("Domain IP Adresi: ")
@@ -61,7 +55,8 @@ def add_domain_api():
             "domain_component": domain_component,
             "ldap_user": ldap_user,
             "ldap_password": ldap_password,
-            "domain_type": domain_type
+            "domain_type": domain_type,
+            "created_by": current_user_id
         }
         
         response = requests.post(
@@ -82,9 +77,9 @@ def add_domain_api():
     except Exception as e:
         print(f"❌ Hata: {e}")
 
-def delete_domain_api():
+def delete_domain_api(current_user_id):
     print("\n🗑️ Domain Silme")
-    domains = list_domains()
+    domains = list_domains(current_user_id)
     
     if not domains:
         print("❌ Silinecek domain bulunamadı.")
@@ -104,7 +99,7 @@ def delete_domain_api():
             return
             
         # API'den domain'i sil
-        response = requests.delete(f"{API_BASE_URL}/delete_domain/{domain_id}")
+        response = requests.delete(f"{API_BASE_URL}/delete_domain/{domain_id}", params={"user_id": current_user_id})
         
         if response.status_code == 200:
             result = response.json()
@@ -120,7 +115,7 @@ def delete_domain_api():
     except Exception as e:
         print(f"❌ Silme hatası: {e}")
 
-def domain_menu():
+def domain_menu(current_user_id):
     while True:
         print("\n🏢 Domain İşlemleri Menüsü")
         print("1) Domain listele")
@@ -132,7 +127,7 @@ def domain_menu():
         
         if secim == "1":
             print("\n🌐 Domain Listesi:")
-            domains = list_domains()
+            domains = list_domains(current_user_id)
             if domains:
                 for d in domains:
                     print(f"ID: {d[0]} - Domain: {d[1]}")
@@ -140,10 +135,10 @@ def domain_menu():
                 print("❌ Listelenecek domain bulunamadı.")
         
         elif secim == "2":
-            add_domain_api()
+            add_domain_api(current_user_id)
         
         elif secim == "3":
-            delete_domain_api()
+            delete_domain_api(current_user_id)
         
         elif secim == "4":
             print("📋 Ana menüye dönülüyor...")
@@ -153,6 +148,7 @@ def domain_menu():
             print("❌ Geçersiz seçim. Lütfen 1-4 arasında bir değer girin.")
 
 def main():
+    current_user_id = input("Kullanıcı UUID'nizi girin (frontend'den alınan): ")
     while True:
         print("\n🔧 Ana Menü")
         print("1) Domain işlemleri")
@@ -162,11 +158,11 @@ def main():
         secim = input("Seçiminizi yapın (1-3): ")
         
         if secim == "1":
-            domain_menu()
+            domain_menu(current_user_id)
             
         elif secim == "2":
-            domain_id = select_domain()
-            kullanici_menu(domain_id)
+            domain_id = select_domain(current_user_id)
+            kullanici_menu(domain_id, current_user_id)
             
         elif secim == "3":
             print("👋 Programdan çıkılıyor...")
@@ -175,7 +171,7 @@ def main():
         else:
             print("❌ Geçersiz seçim. Lütfen 1-3 arasında bir değer girin.")
 
-def kullanici_menu(domain_id):
+def kullanici_menu(domain_id, current_user_id):
     while True:
         print("\n👤 Kullanıcı İşlemleri Menüsü")
         print("1) Kullanıcı devre dışı bırak")
@@ -188,15 +184,15 @@ def kullanici_menu(domain_id):
 
         if alt_secim == "1":
             username = input("Kullanıcı adı: ")
-            disable_user(domain_id, username)
+            disable_user(domain_id, username, current_user_id)
 
         elif alt_secim == "2":
             username = input("Kullanıcı adı: ")
-            disable_user(domain_id, username, enable=True)
+            disable_user(domain_id, username, current_user_id, enable=True)
 
         elif alt_secim == "3":
             username = input("Kullanıcı adı: ")
-            delete_user(domain_id, username)
+            delete_user(domain_id, username, current_user_id)
 
         elif alt_secim == "4":
             username = input("Kullanıcı adı: ")
@@ -207,7 +203,7 @@ def kullanici_menu(domain_id):
             dept_input = input("Departman ID (1-MUHASEBE 2-İK 3-IT ...): ")
             department_id = int(dept_input) if dept_input.strip() else None
 
-            add_user(domain_id, username, first, last, password, role_id, department_id)
+            add_user(domain_id, username, first, last, password, role_id, department_id, current_user_id)
 
         elif alt_secim == "5":
             print("📋 Ana menüye dönülüyor...")

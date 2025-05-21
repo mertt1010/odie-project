@@ -26,6 +26,7 @@ class DomainCreateRequest(BaseModel):
     ldap_user: str
     ldap_password: str
     domain_type: DomainType = DomainType.MS  # ms veya samba
+    created_by: Optional[str] = None  # Kullanıcı UUID bilgisi
 
 # 📌 Yeni domain ekleme
 @router.post("/add_domain")
@@ -48,8 +49,8 @@ def add_domain(domain: DomainCreateRequest):
         conn_db = get_db_connection()
         cursor = conn_db.cursor()
         cursor.execute("""
-            INSERT INTO domains (domain_name, domain_ip, domain_component, ldap_user, ldap_password, domain_type, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO domains (domain_name, domain_ip, domain_component, ldap_user, ldap_password, domain_type, status, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             domain.domain_name,
             domain.domain_ip,
@@ -57,7 +58,8 @@ def add_domain(domain: DomainCreateRequest):
             domain.ldap_user,
             domain.ldap_password,
             domain.domain_type.value,  # Enum değerini kullan
-            "devrede"
+            "devrede",
+            domain.created_by  # Kullanıcı UUID'sini kaydet
         ))      
         conn_db.commit()
         conn_db.close()
@@ -69,10 +71,21 @@ def add_domain(domain: DomainCreateRequest):
 
 # 📌 Domainleri listeleme
 @router.get("/list_domains")
-def list_domains():
+def list_domains(user_id: Optional[str] = Query(None)):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, domain_name, domain_type, status FROM domains")
+    
+    if user_id:
+        # Kullanıcıya ait domainleri filtrele
+        cursor.execute("""
+            SELECT id, domain_name, domain_type, status 
+            FROM domains 
+            WHERE created_by = %s
+        """, (user_id,))
+    else:
+        # Admin için tüm domainleri listele
+        cursor.execute("SELECT id, domain_name, domain_type, status FROM domains")
+        
     domains = cursor.fetchall()
     conn.close()
 
@@ -89,10 +102,19 @@ def list_domains():
 
 # 📌 Domain silme
 @router.delete("/delete_domain/{domain_id}")
-def delete_domain(domain_id: int):
+def delete_domain(domain_id: int, user_id: Optional[str] = Query(None)):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        
+        # Önce domainin kullanıcıya ait olup olmadığını kontrol et
+        if user_id:
+            cursor.execute("SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s", (domain_id, user_id))
+            count = cursor.fetchone()[0]
+            if count == 0:
+                return {"success": False, "message": "❌ Bu domain sizin hesabınıza ait değil veya bulunamadı."}
+        
+        # Domain kullanıcıya aitse veya admin ise silme işlemi yap
         cursor.execute("DELETE FROM domains WHERE id = %s", (domain_id,))
         conn.commit()
         conn.close()
