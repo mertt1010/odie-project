@@ -1,22 +1,26 @@
 import psycopg2
+from dotenv import load_dotenv
 import os
 
+# Load environment variables from .env
+load_dotenv()
 
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "gjM1ePvLQlLLlYZ4"
-DB_HOST = "db.zdgklkzmqwkkczhqishq.supabase.co"
-DB_PORT = "5432"
+# Fetch variables
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
 
 
 def get_db_connection():
     try:
         conn = psycopg2.connect(
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT
+            user=USER,
+            password=PASSWORD,
+            host=HOST,
+            port=PORT,
+            dbname=DBNAME
         )
         print("✅ Supabase veritabanına bağlanıldı.")
         return conn
