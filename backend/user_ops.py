@@ -146,6 +146,90 @@ def delete_user(domain_id, username):
         print(f"❌ LDAP'ten silinemedi: {conn_ldap.result}")
         return False
 
+def update_user(domain_id, username, first_name=None, last_name=None, password=None, role_id=None, department_id=None):
+    """
+    Mevcut bir kullanıcının bilgilerini günceller.
+    
+    Args:
+        domain_id (int): Domain ID
+        username (str): Kullanıcı adı
+        first_name (str, optional): Kullanıcının yeni adı
+        last_name (str, optional): Kullanıcının yeni soyadı
+        password (str, optional): Kullanıcının yeni şifresi
+        role_id (int, optional): Kullanıcının yeni rol ID'si
+        department_id (int, optional): Kullanıcının yeni departman ID'si
+    
+    Returns:
+        tuple: (bool, str) - İşlem başarılı mı, durum mesajı
+    """
+    try:
+        conn_ldap, base_dn = get_ldap_connection_by_domain_id(domain_id)
+        conn_ldap.search(base_dn, f'(sAMAccountName={username})', attributes=['distinguishedName'])
+        
+        if not conn_ldap.entries:
+            print(f"❌ Kullanıcı bulunamadı: {username}")
+            return False, "Kullanıcı bulunamadı"
+        
+        user_dn = conn_ldap.entries[0].distinguishedName.value
+        ldap_changes = {}
+        
+        # LDAP'de güncellenecek alanlar
+        if first_name:
+            ldap_changes['givenName'] = [(MODIFY_REPLACE, [first_name])]
+        
+        if last_name:
+            ldap_changes['sn'] = [(MODIFY_REPLACE, [last_name])]
+        
+        # Şifre değişikliği varsa
+        if password:
+            password_value = ('"%s"' % password).encode('utf-16-le')
+            ldap_changes['unicodePwd'] = [(MODIFY_REPLACE, [password_value])]
+        
+        # LDAP güncellemesi
+        if ldap_changes and not conn_ldap.modify(user_dn, ldap_changes):
+            print(f"❌ LDAP güncellemesi başarısız: {conn_ldap.result}")
+            return False, "LDAP güncellemesi başarısız"
+        
+        # Veritabanı güncellemesi
+        conn_db = get_db_connection()
+        cursor = conn_db.cursor()
+        
+        db_changes = []
+        params = []
+        
+        if first_name:
+            db_changes.append("first_name = %s")
+            params.append(first_name)
+        
+        if last_name:
+            db_changes.append("last_name = %s")
+            params.append(last_name)
+        
+        if password:
+            db_changes.append("password = %s")
+            params.append(password)
+        
+        if role_id:
+            db_changes.append("role_id = %s")
+            params.append(role_id)
+        
+        if department_id:
+            db_changes.append("department_id = %s")
+            params.append(department_id)
+        
+        if db_changes:
+            query = f"UPDATE users SET {', '.join(db_changes)} WHERE username = %s AND domain_id = %s"
+            params.extend([username, domain_id])
+            cursor.execute(query, params)
+            conn_db.commit()
+        
+        conn_db.close()
+        
+        return True, "✅ Kullanıcı bilgileri güncellendi"
+    except Exception as e:
+        print(f"❌ Kullanıcı güncelleme hatası: {e}")
+        return False, f"Güncelleme hatası: {e}"
+
 def get_users_by_domain(domain_id, status=None):
     """
     Belirli bir domain'deki kullanıcıları listeler.
