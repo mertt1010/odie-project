@@ -78,13 +78,13 @@ def list_domains(user_id: Optional[str] = Query(None)):
     if user_id:
         # Kullanıcıya ait domainleri filtrele
         cursor.execute("""
-            SELECT id, domain_name, domain_type, status 
+            SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password
             FROM domains 
             WHERE created_by = %s
         """, (user_id,))
     else:
         # Admin için tüm domainleri listele
-        cursor.execute("SELECT id, domain_name, domain_type, status FROM domains")
+        cursor.execute("SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password FROM domains")
         
     domains = cursor.fetchall()
     conn.close()
@@ -94,7 +94,11 @@ def list_domains(user_id: Optional[str] = Query(None)):
             "id": d[0],
             "domain_name": d[1],
             "domain_type": d[2],
-            "status": d[3]
+            "status": d[3],
+            "domain_ip": d[4],
+            "domain_component": d[5],
+            "ldap_user": d[6],
+            "ldap_password": d[7]
         }
         for d in domains
     ]
@@ -132,7 +136,7 @@ def list_users_by_domain(domain_id: int, status: Optional[UserStatus] = None):
         if status:
             # Belirli bir duruma sahip kullanıcıları getir
             cursor.execute("""
-                SELECT id, username, first_name, last_name, role_id, department_id, status
+                SELECT id, username, first_name, password, last_name, role_id, department_id, status
                 FROM users 
                 WHERE domain_id = %s AND status = %s
                 ORDER BY username
@@ -140,7 +144,7 @@ def list_users_by_domain(domain_id: int, status: Optional[UserStatus] = None):
         else:
             # Tüm kullanıcıları getir
             cursor.execute("""
-                SELECT id, username, first_name, last_name, role_id, department_id, status
+                SELECT id, username, first_name, password, last_name, role_id, department_id, status
                 FROM users 
                 WHERE domain_id = %s
                 ORDER BY username
@@ -154,10 +158,11 @@ def list_users_by_domain(domain_id: int, status: Optional[UserStatus] = None):
                 "id": u[0],
                 "username": u[1],
                 "first_name": u[2],
-                "last_name": u[3],
-                "role_id": u[4],
-                "department_id": u[5],
-                "status": u[6]
+                "password": u[3],
+                "last_name": u[4],
+                "role_id": u[5],
+                "department_id": u[6],
+                "status": u[7]
             }
             for u in users
         ]
