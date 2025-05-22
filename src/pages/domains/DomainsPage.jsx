@@ -1,27 +1,50 @@
 import { useState, useEffect } from "react";
-import mockDomains from "../../test/domains.json";
+import DomainService from "../../services/DomainService";
+import { useAuth } from "../../context/AuthContext";
 
 function DomainsPage() {
   const [domains, setDomains] = useState([]);
   const [filteredDomains, setFilteredDomains] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [passwordVisibility, setPasswordVisibility] = useState({});
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Load domains from mock data
-    setDomains(mockDomains);
-    setFilteredDomains(mockDomains);
+    const fetchDomains = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-    // Initialize password visibility state
-    const initialVisibility = {};
-    mockDomains.forEach((domain) => {
-      initialVisibility[domain.id] = false;
-    });
-    setPasswordVisibility(initialVisibility);
+      try {
+        setLoading(true);
+        const response = await DomainService.listDomains(user.id);
+        const domainsData = response.domains || [];
 
-    setLoading(false);
-  }, []);
+        setDomains(domainsData);
+        console.log(domainsData);
+        setFilteredDomains(domainsData);
+
+        // Initialize password visibility state
+        const initialVisibility = {};
+        domainsData.forEach((domain) => {
+          initialVisibility[domain.id] = false;
+        });
+        setPasswordVisibility(initialVisibility);
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching domains:", err);
+        setError("Failed to load domains. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDomains();
+  }, [user]);
 
   // Filter domains based on search term
   useEffect(() => {
@@ -58,6 +81,20 @@ function DomainsPage() {
     // Implement edit functionality here
   };
 
+  // Show error message if present
+  if (error) {
+    return (
+      <div className="w-full bg-gray-50 min-h-screen">
+        <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center">
+          Domains
+        </div>
+        <div className="m-6 bg-red-50 border border-red-300 rounded-lg p-4 text-red-700">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-gray-50 min-h-screen">
       <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
@@ -79,7 +116,13 @@ function DomainsPage() {
         </div>
       </div>
       {loading ? (
-        <p>Loading...</p>
+        <div className="m-6 flex justify-center">
+          <p className="text-gray-600">Loading domains...</p>
+        </div>
+      ) : !user ? (
+        <div className="m-6 bg-yellow-50 border border-yellow-300 rounded-lg p-4 text-yellow-700">
+          <p>Please log in to view your domains.</p>
+        </div>
       ) : filteredDomains.length > 0 ? (
         <div className="bg-white rounded-lg shadow-md overflow-hidden m-6">
           <table className="min-w-full divide-y divide-gray-200">
@@ -133,10 +176,10 @@ function DomainsPage() {
               {filteredDomains.map((domain) => (
                 <tr key={domain.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
-                    {domain.name}
+                    {domain.domain_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {domain.ip}
+                    {domain.domain_ip}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {domain.ldap_user}
@@ -168,12 +211,12 @@ function DomainsPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        domain.status === "online"
+                        domain.status === "devrede"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {domain.status === "online"
+                      {domain.status === "devrede"
                         ? "Online"
                         : "Connection Error"}
                     </span>

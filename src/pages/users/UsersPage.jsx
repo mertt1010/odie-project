@@ -1,31 +1,99 @@
 import { useState, useEffect } from "react";
-import mockDomainUsers from "../../test/domainUsers.json";
+import { useAuth } from "../../context/AuthContext";
+import DomainService from "../../services/DomainService";
 
 function UsersPage() {
   const [domains, setDomains] = useState([]);
   const [filteredDomains, setFilteredDomains] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expandedDomain, setExpandedDomain] = useState(null);
   const [passwordVisibility, setPasswordVisibility] = useState({});
   const [searchResults, setSearchResults] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const { user } = useAuth();
+
+  // Helper function to get department name by ID
+  const getDepartmentName = (departmentId) => {
+    if (!departmentId) return "Not Assigned";
+
+    // Convert to number for comparison if it's a string
+    const deptId =
+      typeof departmentId === "string"
+        ? parseInt(departmentId, 10)
+        : departmentId;
+
+    const department = departments.find((dept) => dept.id === deptId);
+    return department ? department.name : "Unknown Department";
+  };
 
   useEffect(() => {
-    // Load domains and users from mock data
-    setDomains(mockDomainUsers);
-    setFilteredDomains(mockDomainUsers);
+    const fetchData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-    // Initialize password visibility state for all users
-    let initialVisibility = {};
-    mockDomainUsers.forEach((domain) => {
-      domain.users.forEach((user) => {
-        initialVisibility[user.id] = false;
-      });
-    });
-    setPasswordVisibility(initialVisibility);
+      try {
+        setLoading(true);
 
-    setLoading(false);
-  }, []);
+        // Step 1: Fetch departments first
+        const departmentsResponse = await DomainService.listDepartments();
+        setDepartments(departmentsResponse.departments || []);
+
+        // Step 2: Fetch all domains for the user
+        const domainsResponse = await DomainService.listDomains(user.id);
+        const domainsData = domainsResponse.domains || [];
+
+        // Step 3: Fetch users for each domain
+        const domainsWithUsers = await Promise.all(
+          domainsData.map(async (domain) => {
+            try {
+              const usersResponse = await DomainService.listUsersByDomain(
+                domain.id
+              );
+              return {
+                ...domain,
+                users: usersResponse.users || [],
+              };
+            } catch (err) {
+              console.error(
+                `Failed to fetch users for domain ${domain.id}:`,
+                err
+              );
+              return {
+                ...domain,
+                users: [],
+                error: `Failed to load users for this domain: ${err.message}`,
+              };
+            }
+          })
+        );
+
+        setDomains(domainsWithUsers);
+        setFilteredDomains(domainsWithUsers);
+
+        // Initialize password visibility state for all users
+        let initialVisibility = {};
+        domainsWithUsers.forEach((domain) => {
+          domain.users?.forEach((user) => {
+            initialVisibility[user.id] = false;
+          });
+        });
+        setPasswordVisibility(initialVisibility);
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   // Filter domains and users based on search term
   useEffect(() => {
@@ -44,10 +112,10 @@ function UsersPage() {
         const filteredUsers = domain.users.filter(
           (user) =>
             user.username.toLowerCase().includes(term) ||
-            user.firstName.toLowerCase().includes(term) ||
-            user.lastName.toLowerCase().includes(term) ||
-            user.department.toLowerCase().includes(term) ||
-            user.role.toLowerCase().includes(term)
+            user.first_name.toLowerCase().includes(term) ||
+            user.last_name.toLowerCase().includes(term) ||
+            user.department_id.toLowerCase().includes(term) ||
+            user.role_id.toLowerCase().includes(term)
         );
 
         // Return domain with filtered users
@@ -66,17 +134,17 @@ function UsersPage() {
       const matchingUsers = domain.users.filter(
         (user) =>
           user.username.toLowerCase().includes(term) ||
-          user.firstName.toLowerCase().includes(term) ||
-          user.lastName.toLowerCase().includes(term) ||
-          user.department.toLowerCase().includes(term) ||
-          user.role.toLowerCase().includes(term)
+          user.first_name.toLowerCase().includes(term) ||
+          user.last_name.toLowerCase().includes(term) ||
+          user.department_id.toLowerCase().includes(term) ||
+          user.role_id.toLowerCase().includes(term)
       );
 
       // Add domain information to each matching user
       matchingUsers.forEach((user) => {
         allMatchingUsers.push({
           ...user,
-          domainName: domain.name,
+          domainName: domain.domain_name,
           domainId: domain.id,
         });
       });
@@ -213,26 +281,26 @@ function UsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.firstName}
+                    {user.first_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.lastName}
+                    {user.last_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.department}
+                    {getDepartmentName(user.department_id)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.role}
+                    {user.role_id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.status === "active"
+                        user.status === "devrede"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {user.status === "active" ? "Active" : "Inactive"}
+                      {user.status === "devrede" ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -262,15 +330,17 @@ function UsersPage() {
     return filteredDomains.map((domain) => (
       <div
         key={domain.id}
-        className="bg-white rounded-lg shadow overflow-hidden"
+        className="bg-white rounded-lg shadow overflow-hidden m-6"
       >
         <div
           className="px-6 py-4 cursor-pointer flex justify-between items-center bg-gray-50 hover:bg-gray-100"
           onClick={() => toggleDomain(domain.id)}
         >
           <div>
-            <h2 className="text-lg font-semibold text-odie">{domain.name}</h2>
-            <p className="text-sm text-gray-600">{domain.ip}</p>
+            <h2 className="text-lg font-semibold text-odie">
+              {domain.domain_name}
+            </h2>
+            <p className="text-sm text-gray-600">{domain.domain_ip}</p>
           </div>
           <div className="text-odie">
             <i
@@ -370,26 +440,26 @@ function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.firstName}
+                        {user.first_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.lastName}
+                        {user.last_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.department}
+                        {getDepartmentName(user.department_id)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.role}
+                        {user.role_id}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.status === "active"
+                            user.status === "devrede"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {user.status === "active" ? "Active" : "Inactive"}
+                          {user.status === "devrede" ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -415,6 +485,20 @@ function UsersPage() {
     ));
   };
 
+  // Show error message if present
+  if (error) {
+    return (
+      <div className="w-full bg-gray-50 min-h-screen">
+        <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center">
+          Users
+        </div>
+        <div className="m-6 bg-red-50 border border-red-300 rounded-lg p-4 text-red-700">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-gray-50 min-h-screen">
       <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
@@ -437,23 +521,25 @@ function UsersPage() {
       </div>
 
       {loading ? (
-        <p className="m-6">Loading...</p>
-      ) : (
-        <div className="space-y-4 m-6">
-          {searchTerm.trim() !== "" ? (
-            // Show search results table when searching
-            searchResults.length > 0 ? (
-              renderSearchResultsTable()
-            ) : (
-              <p className="text-center py-4 text-gray-500">
-                No users found matching your search.
-              </p>
-            )
-          ) : (
-            // Show original domain-based view when not searching
-            renderDomainView()
-          )}
+        <div className="m-6 flex justify-center">
+          <p className="text-gray-600">Loading users...</p>
         </div>
+      ) : !user ? (
+        <div className="m-6 bg-yellow-50 border border-yellow-300 rounded-lg p-4 text-yellow-700">
+          <p>Please log in to view users.</p>
+        </div>
+      ) : searchTerm.trim() !== "" ? (
+        // Show search results table when searching
+        searchResults.length > 0 ? (
+          renderSearchResultsTable()
+        ) : (
+          <p className="text-center py-4 text-gray-500">
+            No users found matching your search.
+          </p>
+        )
+      ) : (
+        // Show original domain-based view when not searching
+        renderDomainView()
       )}
     </div>
   );
