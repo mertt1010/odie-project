@@ -56,10 +56,11 @@ function DomainsPage() {
     const term = searchTerm.toLowerCase();
     const results = domains.filter(
       (domain) =>
-        domain.name.toLowerCase().includes(term) ||
-        domain.ip.toLowerCase().includes(term) ||
-        domain.ldap_user.toLowerCase().includes(term) ||
-        domain.domain_type.toLowerCase().includes(term)
+        (domain.domain_name &&
+          domain.domain_name.toLowerCase().includes(term)) ||
+        (domain.domain_ip && domain.domain_ip.toLowerCase().includes(term)) ||
+        (domain.ldap_user && domain.ldap_user.toLowerCase().includes(term)) ||
+        (domain.domain_type && domain.domain_type.toLowerCase().includes(term))
     );
 
     setFilteredDomains(results);
@@ -235,9 +236,9 @@ function DomainsPage() {
           </table>
         </div>
       ) : (
-        <div className="m-6 bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+        <p className="text-center py-4 text-gray-500">
           No domains found matching your search.
-        </div>
+        </p>
       )}
     </div>
   );

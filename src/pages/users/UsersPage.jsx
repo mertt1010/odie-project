@@ -112,10 +112,15 @@ function UsersPage() {
         const filteredUsers = domain.users.filter(
           (user) =>
             user.username.toLowerCase().includes(term) ||
-            user.first_name.toLowerCase().includes(term) ||
-            user.last_name.toLowerCase().includes(term) ||
-            user.department_id.toLowerCase().includes(term) ||
-            user.role_id.toLowerCase().includes(term)
+            (user.first_name && user.first_name.toLowerCase().includes(term)) ||
+            (user.last_name && user.last_name.toLowerCase().includes(term)) ||
+            (typeof user.department_id === "string" &&
+              user.department_id.toLowerCase().includes(term)) ||
+            getDepartmentName(user.department_id)
+              .toLowerCase()
+              .includes(term) ||
+            (typeof user.role_id === "string" &&
+              user.role_id.toLowerCase().includes(term))
         );
 
         // Return domain with filtered users
@@ -134,10 +139,13 @@ function UsersPage() {
       const matchingUsers = domain.users.filter(
         (user) =>
           user.username.toLowerCase().includes(term) ||
-          user.first_name.toLowerCase().includes(term) ||
-          user.last_name.toLowerCase().includes(term) ||
-          user.department_id.toLowerCase().includes(term) ||
-          user.role_id.toLowerCase().includes(term)
+          (user.first_name && user.first_name.toLowerCase().includes(term)) ||
+          (user.last_name && user.last_name.toLowerCase().includes(term)) ||
+          (typeof user.department_id === "string" &&
+            user.department_id.toLowerCase().includes(term)) ||
+          getDepartmentName(user.department_id).toLowerCase().includes(term) ||
+          (typeof user.role_id === "string" &&
+            user.role_id.toLowerCase().includes(term))
       );
 
       // Add domain information to each matching user
