@@ -5,6 +5,7 @@ from ldap3 import Server, Connection
 from enum import Enum
 from typing import Optional
 import re
+import psycopg2
 
 router = APIRouter()
 
@@ -69,6 +70,13 @@ class DomainCreateRequest(BaseModel):
 @router.post("/add_domain")
 def add_domain(domain: DomainCreateRequest):
     try:
+        # 🔍 IP benzersizlik kontrolü (uygulama seviyesi)
+        if check_user_ip_exists(domain.domain_ip, domain.created_by):
+            return {
+                "success": False,
+                "message": f"❌ Bu IP adresi ({domain.domain_ip}) ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
+            }
+        
         # 🧠 LDAP bağlantısı kur
         if domain.domain_type == DomainType.SAMBA:
             server = Server(domain.domain_ip, port=int(domain.domain_port), use_ssl=False)  # 👈 BURASI
@@ -81,7 +89,6 @@ def add_domain(domain: DomainCreateRequest):
             conn = Connection(server, user=domain.ldap_user, password=domain.ldap_password, auto_bind=True)
 
         conn.unbind()
-
 
         # ✅ Veritabanına kaydet
         conn_db = get_db_connection()
@@ -104,6 +111,16 @@ def add_domain(domain: DomainCreateRequest):
         conn_db.close()
 
         return {"success": True, "message": "✅ Domain başarıyla eklendi"}
+    except psycopg2.IntegrityError as e:
+        # 🛡️ Veritabanı constraint violation yakalandı
+        if "unique_ip_per_user" in str(e):
+            return {
+                "success": False,
+                "message": f"❌ Bu IP adresi ({domain.domain_ip}) ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
+            }
+        else:
+            print(f"❌ Veritabanı bütünlük hatası: {e}")
+            return {"success": False, "message": f"❌ Veritabanı hatası: Domain eklenemedi"}
     except Exception as e:
         print(f"❌ Hata: {e}")
         return {"success": False, "message": f"❌ Hata: {e}"}
@@ -122,6 +139,21 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
             if count == 0:
                 return {"success": False, "message": "❌ Bu domain sizin hesabınıza ait değil veya bulunamadı."}
         
+        # 🔍 IP güncellemesi yapılıyorsa benzersizlik kontrolü
+        if domain.domain_ip is not None and user_id:
+            # Mevcut domain'in IP'si ile aynı değilse kontrol et
+            cursor.execute("SELECT domain_ip FROM domains WHERE id = %s", (domain_id,))
+            current_ip = cursor.fetchone()[0]
+            
+            if current_ip != domain.domain_ip:
+                # Yeni IP ile kullanıcının başka domain'i var mı kontrol et
+                if check_user_ip_exists(domain.domain_ip, user_id):
+                    conn.close()
+                    return {
+                        "success": False,
+                        "message": f"❌ Bu IP adresi ({domain.domain_ip}) ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
+                    }
+        
         # Güncellenecek alanları belirle
         update_fields = []
         params = []
@@ -137,10 +169,9 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
         if domain.domain_component is not None:
             update_fields.append("domain_component = %s")
             params.append(domain.domain_component)
-            
-        if domain.ldap_user is not None:
-            update_fields.append("ldap_user = %s")
-            params.append(domain.ldap_user)
+            if domain.ldap_user is not None:
+                update_fields.append("ldap_user = %s")
+                params.append(domain.ldap_user)
             
         if domain.ldap_password is not None:
             update_fields.append("ldap_password = %s")
@@ -190,6 +221,16 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
             }
         else:
             return {"success": False, "message": "❌ Domain güncellenemedi."}
+    except psycopg2.IntegrityError as e:
+        # 🛡️ Veritabanı constraint violation yakalandı
+        if "unique_ip_per_user" in str(e):
+            return {
+                "success": False,
+                "message": f"❌ Bu IP adresi ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
+            }
+        else:
+            print(f"❌ Veritabanı bütünlük hatası: {e}")
+            return {"success": False, "message": f"❌ Veritabanı hatası: Domain güncellenemedi"}
     except Exception as e:
         print(f"❌ Güncelleme hatası: {e}")
         return {"success": False, "message": f"❌ Güncelleme hatası: {e}"}
@@ -375,3 +416,29 @@ def list_departments():
         return {"departments": department_list}
     except Exception as e:
         return {"success": False, "message": f"❌ Departman listeleme hatası: {e}"}
+
+# 📌 IP benzersizlik kontrol fonksiyonu
+def check_user_ip_exists(domain_ip: str, created_by: str):
+    """
+    Belirli bir kullanıcının aynı IP ile domain'i olup olmadığını kontrol eder
+    
+    Args:
+        domain_ip (str): Kontrol edilecek IP adresi
+        created_by (str): Kullanıcı UUID'si
+    
+    Returns:
+        bool: Aynı kullanıcının bu IP ile domain'i varsa True, yoksa False
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM domains WHERE domain_ip = %s AND created_by = %s",
+            (domain_ip, created_by)
+        )
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count > 0
+    except Exception as e:
+        print(f"❌ IP kontrol hatası: {e}")
+        return False

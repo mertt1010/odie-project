@@ -129,16 +129,43 @@ def delete_user(domain_id, username):
         return False
 
     user_dn = conn_ldap.entries[0].distinguishedName.value
-
+    
     if conn_ldap.delete(user_dn):
         print(f"✅ LDAP'ten silindi: {username}")
         try:
             conn_db = get_db_connection()
+            if not conn_db:
+                print(f"❌ Veritabanı bağlantısı kurulamadı!")
+                return True
+                
             cursor = conn_db.cursor()
-            cursor.execute("DELETE FROM users WHERE username = %s AND domain_id = %s", (username, domain_id))
-            conn_db.commit()
+              # Önce kullanıcının veritabanında var olup olmadığını kontrol et (case-insensitive)
+            cursor.execute("SELECT id, username, domain_id FROM users WHERE LOWER(username) = LOWER(%s) AND domain_id = %s", (username, domain_id))
+            user_exists = cursor.fetchone()
+            
+            if user_exists:
+                actual_username = user_exists[1]  # Veritabanındaki gerçek kullanıcı adı
+                print(f"🔍 Kullanıcı veritabanında bulundu: ID={user_exists[0]}, Username={actual_username}, Domain_ID={user_exists[2]}")
+                
+                # Silme işlemini gerçekleştir (gerçek kullanıcı adını kullan)
+                cursor.execute("DELETE FROM users WHERE LOWER(username) = LOWER(%s) AND domain_id = %s", (username, domain_id))
+                affected_rows = cursor.rowcount
+                conn_db.commit()
+                
+                print(f"✅ Supabase'den silindi: {username} (Etkilenen satır sayısı: {affected_rows})")
+                
+                # Silme işlemini doğrula
+                cursor.execute("SELECT COUNT(*) FROM users WHERE username = %s AND domain_id = %s", (username, domain_id))
+                remaining_count = cursor.fetchone()[0]
+                
+                if remaining_count == 0:
+                    print(f"✅ Silme doğrulandı: {username} artık veritabanında yok")
+                else:
+                    print(f"⚠️ Silme başarısız: {username} hala veritabanında ({remaining_count} kayıt)")
+            else:
+                print(f"⚠️ Kullanıcı Supabase'de bulunamadı: {username} (domain_id: {domain_id})")
+                
             conn_db.close()
-            print(f"✅ Supabase'den de silindi: {username}")
         except Exception as e:
             print(f"❌ Supabase silme hatası: {e}")
         return True
