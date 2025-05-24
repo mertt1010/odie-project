@@ -31,13 +31,26 @@ class DomainCreateRequest(BaseModel):
 
 # 📌 Domain güncelleme modeli
 class DomainUpdateRequest(BaseModel):
-    domain_name: Optional[str] = None
-    domain_ip: Optional[str] = None
-    domain_component: Optional[str] = None
-    ldap_user: Optional[str] = None
-    ldap_password: Optional[str] = None
-    domain_type: Optional[DomainType] = None
-    status: Optional[str] = None
+    domain_name: Optional[str] = Field(None, description="Domain adı (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    domain_ip: Optional[str] = Field(None, description="Domain IP adresi (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    domain_component: Optional[str] = Field(None, description="Domain component (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    ldap_user: Optional[str] = Field(None, description="LDAP kullanıcı adı (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    ldap_password: Optional[str] = Field(None, description="LDAP şifresi (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    domain_type: Optional[DomainType] = Field(None, description="Domain tipi: ms veya samba (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    status: Optional[str] = Field(None, description="Domain durumu: devrede veya devre dışı (opsiyonel - sadece değiştirmek istiyorsanız girin)", example=None)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "domain_name": None,
+                "domain_ip": None,
+                "domain_component": None,
+                "ldap_user": None,
+                "ldap_password": None,
+                "domain_type": None,
+                "status": None
+            }
+        }
 
 # 📌 Yeni domain ekleme
 from fastapi import APIRouter, HTTPException
@@ -126,7 +139,24 @@ def add_domain(domain: DomainCreateRequest):
         return {"success": False, "message": f"❌ Hata: {e}"}
 
 # 📌 Domain güncelleme
-@router.put("/update_domain/{domain_id}")
+@router.put("/update_domain/{domain_id}", 
+           summary="Domain Güncelle",
+           description="""
+           Domain bilgilerini günceller. 
+           
+           **Önemli:** Sadece değiştirmek istediğiniz alanları gönderin!
+           - Boş (null) bırakılan alanlar güncellenmez
+           - Sadece gönderilen alanlar değiştirilir
+           
+           **Örnek kullanım:**
+           - Sadece Domain Component'ı değiştirmek için: {"domain_component": "new_component"}
+           - Sadece LDAP kullanıcı adını değiştirmek için: {"ldap_user": "new_ldap_user"}
+           - Sadece LDAP şifresini değiştirmek için: {"ldap_password": "new_ldap_password"}
+           - Sadece Domain tipi değiştirmek için: {"domain_type": "samba"}
+           - Sadece Domain durumunu değiştirmek için: {"status": "devre dışı"}
+           - Sadece IP değiştirmek için: {"domain_ip": "192.168.1.100"}
+           - Sadece isim değiştirmek için: {"domain_name": "yeni-domain"}
+           """)
 def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional[str] = Query(None)):
     try:
         conn = get_db_connection()
@@ -153,35 +183,42 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
                         "success": False,
                         "message": f"❌ Bu IP adresi ({domain.domain_ip}) ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
                     }
-        
-        # Güncellenecek alanları belirle
+          # Güncellenecek alanları belirle
         update_fields = []
         params = []
         
-        if domain.domain_name is not None:
+        # domain_name kontrolü (None ve boş string değilse)
+        if domain.domain_name is not None and domain.domain_name.strip() != "":
             update_fields.append("domain_name = %s")
             params.append(domain.domain_name)
             
-        if domain.domain_ip is not None:
+        # domain_ip kontrolü (None ve boş string değilse)
+        if domain.domain_ip is not None and domain.domain_ip.strip() != "":
             update_fields.append("domain_ip = %s")
             params.append(domain.domain_ip)
             
-        if domain.domain_component is not None:
+        # domain_component kontrolü (None ve boş string değilse)
+        if domain.domain_component is not None and domain.domain_component.strip() != "":
             update_fields.append("domain_component = %s")
             params.append(domain.domain_component)
-            if domain.ldap_user is not None:
-                update_fields.append("ldap_user = %s")
-                params.append(domain.ldap_user)
             
-        if domain.ldap_password is not None:
+        # ldap_user kontrolü (None ve boş string değilse) - ✅ Düzeltildi
+        if domain.ldap_user is not None and domain.ldap_user.strip() != "":
+            update_fields.append("ldap_user = %s")
+            params.append(domain.ldap_user)
+            
+        # ldap_password kontrolü (None ve boş string değilse)
+        if domain.ldap_password is not None and domain.ldap_password.strip() != "":
             update_fields.append("ldap_password = %s")
             params.append(domain.ldap_password)
             
+        # domain_type kontrolü (None değilse)
         if domain.domain_type is not None:
             update_fields.append("domain_type = %s")
             params.append(domain.domain_type.value)
             
-        if domain.status is not None:
+        # status kontrolü (None ve boş string değilse)
+        if domain.status is not None and domain.status.strip() != "":
             update_fields.append("status = %s")
             params.append(domain.status)
         
