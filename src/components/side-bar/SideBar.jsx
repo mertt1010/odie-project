@@ -19,7 +19,7 @@ function SideBar() {
   };
 
   return (
-    <div className="flex flex-col w-[72px] border-r h-screen border-gray-300">
+    <div className="flex flex-col w-[72px] border-r h-screen border-gray-300 fixed left-0 top-0 bg-white z-10">
       <div className="logo w-full h-[72px] flex items-center justify-center border-b border-gray-300">
         <img src={odieIcon} alt="" className="w-[32px] h-auto" />
       </div>

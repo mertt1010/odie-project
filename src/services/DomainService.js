@@ -37,6 +37,101 @@ const DomainService = {
   },
 
   /**
+   * Add a new domain
+   * @param {Object} domainData - The domain data to create
+   * @returns {Promise} - API response
+   */
+  addDomain: async (domainData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/add_domain`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(domainData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error adding domain:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing domain
+   * @param {string|number} domainId - The domain ID
+   * @param {Object} domainData - The updated domain data
+   * @param {string} userId - The user's UUID from Supabase
+   * @returns {Promise} - API response
+   */
+  updateDomain: async (domainId, domainData, userId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/update_domain/${domainId}?user_id=${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(domainData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error updating domain ${domainId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a domain
+   * @param {string|number} domainId - The domain ID
+   * @param {string} userId - The user's UUID from Supabase
+   * @returns {Promise} - API response
+   */
+  deleteDomain: async (domainId, userId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/delete_domain/${domainId}?user_id=${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error deleting domain ${domainId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
    * Get all users for a specific domain
    * @param {string|number} domainId - The domain ID
    * @returns {Promise} - API response with users data

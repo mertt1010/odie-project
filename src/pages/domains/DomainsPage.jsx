@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DomainService from "../../services/DomainService";
 import { useAuth } from "../../context/AuthContext";
 
 function DomainsPage() {
+  const navigate = useNavigate();
   const [domains, setDomains] = useState([]);
   const [filteredDomains, setFilteredDomains] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,8 +80,11 @@ function DomainsPage() {
   };
 
   const handleEdit = (domain) => {
-    console.log("Edit domain:", domain);
-    // Implement edit functionality here
+    navigate(`/domains/edit/${domain.id}`);
+  };
+
+  const handleAddDomain = () => {
+    navigate("/domains/add");
   };
 
   // Show error message if present
@@ -101,7 +106,10 @@ function DomainsPage() {
       <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
         Domains
         <div className="flex items-center">
-          <button className="bg-transparent text-[16px] font-medium text-odie rounded-md mr-6 hover:text-gray-600 cursor-pointer">
+          <button
+            onClick={handleAddDomain}
+            className="bg-transparent text-[16px] font-medium text-odie rounded-md mr-6 hover:text-gray-600 cursor-pointer"
+          >
             <i className="bi bi-plus-lg"></i> Add Domain
           </button>
           <div className="flex items-center justify-between w-[300px] mr-6 px-3 py-2 bg-white rounded-md border border-gray-300">
