@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import DomainService from "../../services/DomainService";
 
 function UsersPage() {
+  const navigate = useNavigate();
   const [domains, setDomains] = useState([]);
   const [filteredDomains, setFilteredDomains] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,72 +30,86 @@ function UsersPage() {
     return department ? department.name : "Unknown Department";
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+  // Function to fetch all data
+  const refreshData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        // Step 1: Fetch departments first
-        const departmentsResponse = await DomainService.listDepartments();
-        setDepartments(departmentsResponse.departments || []);
+      // Step 1: Fetch departments first
+      const departmentsResponse = await DomainService.listDepartments();
+      setDepartments(departmentsResponse.departments || []);
 
-        // Step 2: Fetch all domains for the user
-        const domainsResponse = await DomainService.listDomains(user.id);
-        const domainsData = domainsResponse.domains || [];
+      // Step 2: Fetch all domains for the user
+      const domainsResponse = await DomainService.listDomains(user.id);
+      const domainsData = domainsResponse.domains || [];
 
-        // Step 3: Fetch users for each domain
-        const domainsWithUsers = await Promise.all(
-          domainsData.map(async (domain) => {
-            try {
-              const usersResponse = await DomainService.listUsersByDomain(
-                domain.id
-              );
-              return {
-                ...domain,
-                users: usersResponse.users || [],
-              };
-            } catch (err) {
-              console.error(
-                `Failed to fetch users for domain ${domain.id}:`,
-                err
-              );
-              return {
-                ...domain,
-                users: [],
-                error: `Failed to load users for this domain: ${err.message}`,
-              };
-            }
-          })
-        );
+      // Step 3: Fetch users for each domain
+      const domainsWithUsers = await Promise.all(
+        domainsData.map(async (domain) => {
+          try {
+            const usersResponse = await DomainService.listUsersByDomain(
+              domain.id
+            );
+            return {
+              ...domain,
+              users: usersResponse.users || [],
+            };
+          } catch (err) {
+            console.error(
+              `Failed to fetch users for domain ${domain.id}:`,
+              err
+            );
+            return {
+              ...domain,
+              users: [],
+              error: `Failed to load users for this domain: ${err.message}`,
+            };
+          }
+        })
+      );
 
-        setDomains(domainsWithUsers);
-        setFilteredDomains(domainsWithUsers);
+      setDomains(domainsWithUsers);
+      setFilteredDomains(domainsWithUsers);
 
-        // Initialize password visibility state for all users
-        let initialVisibility = {};
-        domainsWithUsers.forEach((domain) => {
-          domain.users?.forEach((user) => {
-            initialVisibility[user.id] = false;
-          });
+      // Initialize password visibility state for all users
+      let initialVisibility = {};
+      domainsWithUsers.forEach((domain) => {
+        domain.users?.forEach((user) => {
+          initialVisibility[user.id] = false;
         });
-        setPasswordVisibility(initialVisibility);
+      });
+      setPasswordVisibility(initialVisibility);
 
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load data. Please try again later.");
-      } finally {
-        setLoading(false);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, [user]);
+
+  // Listen for focus events to refresh data when returning from add user page
+  useEffect(() => {
+    const handleFocus = () => {
+      // Only refresh if we're not currently loading and user exists
+      if (!loading && user) {
+        refreshData();
       }
     };
 
-    fetchData();
-  }, [user]);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loading, user]);
 
   // Filter domains and users based on search term
   useEffect(() => {
@@ -181,8 +197,19 @@ function UsersPage() {
   };
 
   const handleEditUser = (domain, user) => {
-    console.log("Edit user:", user, "in domain:", domain);
-    // Implement edit functionality here
+    navigate(
+      `/users/edit?domain_id=${domain.id}&domain_name=${encodeURIComponent(
+        domain.domain_name
+      )}&username=${encodeURIComponent(user.username)}`
+    );
+  };
+
+  const handleAddUser = (domain) => {
+    navigate(
+      `/users/add?domain_id=${domain.id}&domain_name=${encodeURIComponent(
+        domain.domain_name
+      )}`
+    );
   };
 
   // Render search results table when searching
@@ -315,7 +342,7 @@ function UsersPage() {
                     <button
                       onClick={() =>
                         handleEditUser(
-                          { id: user.domainId, name: user.domainName },
+                          { id: user.domainId, domain_name: user.domainName },
                           user
                         )
                       }
@@ -350,14 +377,27 @@ function UsersPage() {
             </h2>
             <p className="text-sm text-gray-600">{domain.domain_ip}</p>
           </div>
-          <div className="text-odie">
-            <i
-              className={`bi ${
-                expandedDomain === domain.id
-                  ? "bi-chevron-up"
-                  : "bi-chevron-down"
-              } text-xl`}
-            ></i>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddUser(domain);
+              }}
+              className="text-odie hover:text-gray-600 flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
+              title="Add User to this Domain"
+            >
+              <i className="bi bi-person-plus text-lg"></i>
+              <span>Add User</span>
+            </button>
+            <div className="text-odie">
+              <i
+                className={`bi ${
+                  expandedDomain === domain.id
+                    ? "bi-chevron-up"
+                    : "bi-chevron-down"
+                } text-xl`}
+              ></i>
+            </div>
           </div>
         </div>
 
@@ -512,9 +552,6 @@ function UsersPage() {
       <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
         Users
         <div className="flex items-center">
-          <button className="bg-transparent text-[16px] font-medium text-odie rounded-md mr-6 hover:text-gray-600 cursor-pointer">
-            <i className="bi bi-plus-lg"></i> Add User
-          </button>
           <div className="flex items-center justify-between mr-6 px-3 w-[300px] py-2 bg-white rounded-md border border-gray-300">
             <input
               type="text"

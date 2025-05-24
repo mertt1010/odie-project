@@ -182,6 +182,168 @@ const DomainService = {
       throw error;
     }
   },
+
+  /**
+   * Add a new user to a domain
+   * @param {Object} userData - The user data to create
+   * @returns {Promise} - API response
+   */
+  addUser: async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/add_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error adding user:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Enable a user in a domain
+   * @param {string} username - The username to enable
+   * @param {number} domainId - The domain ID
+   * @returns {Promise} - API response
+   */
+  enableUser: async (username, domainId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/enable_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          domain_id: domainId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error enabling user:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Disable a user in a domain
+   * @param {string} username - The username to disable
+   * @param {number} domainId - The domain ID
+   * @returns {Promise} - API response
+   */
+  disableUser: async (username, domainId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/disable_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          domain_id: domainId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error disabling user:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing user
+   * @param {number} domainId - The domain ID
+   * @param {string} username - The username to update
+   * @param {Object} userData - The updated user data
+   * @returns {Promise} - API response
+   */
+  updateUser: async (domainId, username, userData) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/update_user/${domainId}/${username}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a user from a domain
+   * @param {string} username - The username to delete
+   * @param {number} domainId - The domain ID
+   * @returns {Promise} - API response
+   */
+  deleteUser: async (username, domainId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/delete_user`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          domain_id: domainId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
+  },
 };
 
 export default DomainService;
