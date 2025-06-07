@@ -549,10 +549,10 @@ function UsersPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
-      <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
-        Users
-        <div className="flex items-center">
-          <div className="flex items-center justify-between mr-6 px-3 w-[300px] py-2 bg-white rounded-md border border-gray-300">
+      <div className="h-[72px] border-b border-gray-300 w-full p-6 md:pl-6 font-bold text-[24px] text-odie flex items-center justify-center md:justify-between">
+        <p className="hidden md:block">Users</p>
+        <div className="flex items-center w-full md:w-auto">
+          <div className="flex items-center justify-between px-3 w-full md:w-[300px] py-2 bg-white rounded-md border border-gray-300">
             <input
               type="text"
               placeholder="Search by username"

@@ -91,8 +91,8 @@ function DomainsPage() {
   if (error) {
     return (
       <div className="w-full bg-gray-50 min-h-screen">
-        <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center">
-          Domains
+        <div className="hidden md:flex h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie items-center">
+          <p className="hidden md:block">Domains</p>
         </div>
         <div className="m-6 bg-red-50 border border-red-300 rounded-lg p-4 text-red-700">
           <p>{error}</p>
@@ -103,16 +103,16 @@ function DomainsPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
-      <div className="h-[72px] border-b border-gray-300 w-full pl-6 font-bold text-[24px] text-odie flex items-center justify-between">
-        Domains
-        <div className="flex items-center">
+      <div className="h-auto md:h-[72px] border-b border-gray-300 w-full p-6 md:pl-6 font-bold text-[24px] text-odie flex items-center justify-center md:justify-between">
+        <p className="hidden md:block">Domains</p>
+        <div className="flex items-center gap-4 md:flex-row flex-col w-full md:w-auto">
           <button
             onClick={handleAddDomain}
-            className="bg-transparent text-[16px] font-medium text-odie rounded-md mr-6 hover:text-gray-600 cursor-pointer"
+            className="bg-transparent text-[16px] font-medium text-odie rounded-md hover:text-gray-600 md:border-none border md:p-0 p-2 md:w-auto w-full border-gray-300 cursor-pointer"
           >
             <i className="bi bi-plus-lg"></i> Add Domain
           </button>
-          <div className="flex items-center justify-between w-[300px] mr-6 px-3 py-2 bg-white rounded-md border border-gray-300">
+          <div className="flex items-center justify-between w-full md:w-[300px] px-3 py-2 bg-white rounded-md border border-gray-300">
             <input
               type="text"
               placeholder="Search by domain name"
