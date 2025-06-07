@@ -134,75 +134,167 @@ function DomainsPage() {
         </div>
       ) : filteredDomains.length > 0 ? (
         <div className="bg-white rounded-lg shadow-md overflow-hidden m-6">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Domain Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Domain IP
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  LDAP User
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  LDAP Password
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Domain Type
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDomains.map((domain) => (
-                <tr key={domain.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
+          {/* Desktop table view - Hidden on mobile */}
+          <div className="hidden md:block">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Domain Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Domain IP
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    LDAP User
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    LDAP Password
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Domain Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredDomains.map((domain) => (
+                  <tr key={domain.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
+                      {domain.domain_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {domain.domain_ip}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {domain.ldap_user}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <span className="mr-2">
+                          {passwordVisibility[domain.id]
+                            ? domain.ldap_password
+                            : "••••••••"}
+                        </span>
+                        <button
+                          onClick={() => togglePasswordVisibility(domain.id)}
+                          className="text-odie"
+                        >
+                          <i
+                            className={`bi ${
+                              passwordVisibility[domain.id]
+                                ? "bi-eye-slash"
+                                : "bi-eye"
+                            }`}
+                          ></i>
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {domain.domain_type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          domain.status === "devrede"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {domain.status === "devrede"
+                          ? "Online"
+                          : "Connection Error"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button
+                        onClick={() => handleEdit(domain)}
+                        className="text-odie hover:text-gray-600 flex items-center gap-2 cursor-pointer"
+                      >
+                        <i className="bi bi-pencil-square text-lg"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card view - Only shown on mobile */}
+          <div className="md:hidden">
+            {filteredDomains.map((domain) => (
+              <div key={domain.id} className="border-b border-gray-200 p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium text-odie text-lg">
                     {domain.domain_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {domain.domain_ip}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {domain.ldap_user}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  </h3>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      domain.status === "devrede"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {domain.status === "devrede"
+                      ? "Online"
+                      : "Connection Error"}
+                  </span>
+                </div>
+
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <p className="text-gray-500 mb-1 font-medium">Domain IP:</p>
+                    <p className="font-medium break-words">
+                      {domain.domain_ip}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 mb-1 font-medium">LDAP User:</p>
+                    <p className="font-medium break-words">
+                      {domain.ldap_user}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 mb-1 font-medium">
+                      LDAP Password:
+                    </p>
                     <div className="flex items-center">
-                      <span className="mr-2">
+                      <p className="font-medium break-words mr-2">
                         {passwordVisibility[domain.id]
                           ? domain.ldap_password
                           : "••••••••"}
-                      </span>
+                      </p>
                       <button
                         onClick={() => togglePasswordVisibility(domain.id)}
-                        className="text-odie"
+                        className="text-odie flex-shrink-0"
                       >
                         <i
                           className={`bi ${
@@ -213,35 +305,27 @@ function DomainsPage() {
                         ></i>
                       </button>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {domain.domain_type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        domain.status === "devrede"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {domain.status === "devrede"
-                        ? "Online"
-                        : "Connection Error"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button
-                      onClick={() => handleEdit(domain)}
-                      className="text-odie hover:text-gray-600 flex items-center gap-2 cursor-pointer"
-                    >
-                      <i className="bi bi-pencil-square text-lg"></i> Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500 mb-1 font-medium">
+                      Domain Type:
+                    </p>
+                    <p className="font-medium">{domain.domain_type}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() => handleEdit(domain)}
+                    className="w-full text-odie hover:text-gray-600 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <i className="bi bi-pencil-square text-lg"></i> Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <p className="text-center py-4 text-gray-500">

@@ -222,7 +222,9 @@ function UsersPage() {
             Found {searchResults.length} users matching your search
           </p>
         </div>
-        <div className="p-4">
+
+        {/* Desktop table view - Hidden on mobile */}
+        <div className="hidden md:block p-4">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -356,6 +358,90 @@ function UsersPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile card view - Only shown on mobile */}
+        <div className="md:hidden">
+          {searchResults.map((user) => (
+            <div key={user.id} className="border-b border-gray-200 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <h3 className="font-medium text-odie text-lg">
+                    {user.username}
+                  </h3>
+                  <p className="text-sm text-gray-600">{user.domainName}</p>
+                </div>
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    user.status === "devrede"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {user.status === "devrede" ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-gray-500 mb-1 font-medium">Name:</p>
+                  <p className="font-medium break-words">
+                    {user.first_name || "-"} {user.last_name || "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1 font-medium">Department:</p>
+                  <p className="font-medium break-words">
+                    {getDepartmentName(user.department_id)}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1 font-medium">Role:</p>
+                  <p className="font-medium break-words">{user.role_id}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1 font-medium">Password:</p>
+                  <div className="flex items-center">
+                    <p className="font-medium break-words mr-2">
+                      {passwordVisibility[user.id] ? user.password : "••••••••"}
+                    </p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePasswordVisibility(user.id);
+                      }}
+                      className="text-odie flex-shrink-0"
+                    >
+                      <i
+                        className={`bi ${
+                          passwordVisibility[user.id]
+                            ? "bi-eye-slash"
+                            : "bi-eye"
+                        }`}
+                      ></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() =>
+                    handleEditUser(
+                      { id: user.domainId, domain_name: user.domainName },
+                      user
+                    )
+                  }
+                  className="w-full text-odie hover:text-gray-600 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <i className="bi bi-pencil-square text-lg"></i> Edit
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -404,104 +490,145 @@ function UsersPage() {
         {expandedDomain === domain.id && (
           <div className="p-4">
             {domain.users.length > 0 ? (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Username
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Password
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      First Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Last Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Department
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Role
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {domain.users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
-                        {user.username}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <span className="mr-2">
-                            {passwordVisibility[user.id]
-                              ? user.password
-                              : "••••••••"}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              togglePasswordVisibility(user.id);
-                            }}
-                            className="text-odie"
-                          >
-                            <i
-                              className={`bi ${
-                                passwordVisibility[user.id]
-                                  ? "bi-eye-slash"
-                                  : "bi-eye"
+              <>
+                {/* Desktop table view - Hidden on mobile */}
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Username
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Password
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          First Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Last Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Department
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Role
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Status
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {domain.users.map((user) => (
+                        <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
+                            {user.username}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <span className="mr-2">
+                                {passwordVisibility[user.id]
+                                  ? user.password
+                                  : "••••••••"}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePasswordVisibility(user.id);
+                                }}
+                                className="text-odie"
+                              >
+                                <i
+                                  className={`bi ${
+                                    passwordVisibility[user.id]
+                                      ? "bi-eye-slash"
+                                      : "bi-eye"
+                                  }`}
+                                ></i>
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.first_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.last_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {getDepartmentName(user.department_id)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.role_id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                user.status === "devrede"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
                               }`}
-                            ></i>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.first_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.last_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getDepartmentName(user.department_id)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.role_id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                            >
+                              {user.status === "devrede"
+                                ? "Active"
+                                : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <button
+                              onClick={() => handleEditUser(domain, user)}
+                              className="text-odie hover:text-gray-600 flex items-center gap-2 cursor-pointer"
+                            >
+                              <i className="bi bi-pencil-square text-lg"></i>{" "}
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card view - Only shown on mobile */}
+                <div className="md:hidden">
+                  {domain.users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="border-b border-gray-200 p-4 first:border-t"
+                    >
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-medium text-odie text-lg">
+                          {user.username}
+                        </h3>
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
                             user.status === "devrede"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
@@ -509,19 +636,77 @@ function UsersPage() {
                         >
                           {user.status === "devrede" ? "Active" : "Inactive"}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <div>
+                          <p className="text-gray-500 mb-1 font-medium">
+                            Name:
+                          </p>
+                          <p className="font-medium break-words">
+                            {user.first_name || "-"} {user.last_name || "-"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-gray-500 mb-1 font-medium">
+                            Department:
+                          </p>
+                          <p className="font-medium break-words">
+                            {getDepartmentName(user.department_id)}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-gray-500 mb-1 font-medium">
+                            Role:
+                          </p>
+                          <p className="font-medium break-words">
+                            {user.role_id}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-gray-500 mb-1 font-medium">
+                            Password:
+                          </p>
+                          <div className="flex items-center">
+                            <p className="font-medium break-words mr-2">
+                              {passwordVisibility[user.id]
+                                ? user.password
+                                : "••••••••"}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                togglePasswordVisibility(user.id);
+                              }}
+                              className="text-odie flex-shrink-0"
+                            >
+                              <i
+                                className={`bi ${
+                                  passwordVisibility[user.id]
+                                    ? "bi-eye-slash"
+                                    : "bi-eye"
+                                }`}
+                              ></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-gray-100">
                         <button
                           onClick={() => handleEditUser(domain, user)}
-                          className="text-odie hover:text-gray-600 flex items-center gap-2 cursor-pointer"
+                          className="w-full text-odie hover:text-gray-600 flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <i className="bi bi-pencil-square text-lg"></i> Edit
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </>
             ) : (
               <p className="text-center py-4 text-gray-500">
                 No users found for this domain.
