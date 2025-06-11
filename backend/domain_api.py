@@ -438,7 +438,7 @@ def list_departments():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name FROM departments ORDER BY name")
+        cursor.execute("SELECT id, department_name FROM departments ORDER BY department_name")
         departments = cursor.fetchall()
         conn.close()
         
@@ -453,6 +453,180 @@ def list_departments():
         return {"departments": department_list}
     except Exception as e:
         return {"success": False, "message": f"❌ Departman listeleme hatası: {e}"}
+
+# 📌 Departman veri modeli
+class DepartmentCreateRequest(BaseModel):
+    department_name: str
+    domain_id: int
+    created_by: str
+
+class DepartmentUpdateRequest(BaseModel):
+    department_name: str
+
+# 📌 Domain'e ait departmanları listeleme
+@router.get("/list_departments_by_domain/{domain_id}", 
+            summary="Domain'e Ait Departmanları Listele", 
+            description="Belirli bir domain'e ait departmanları listeler")
+def list_departments_by_domain(domain_id: int, user_id: Optional[str] = Query(None)):
+    try:
+        # Kullanıcının bu domain'e erişim yetkisi var mı kontrol et
+        if user_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s",
+                (domain_id, user_id)
+            )
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            if count == 0:
+                return {"success": False, "message": "❌ Bu domain'e erişim yetkiniz yok veya domain bulunamadı."}
+        
+        # Departmanları getir
+        from db_ops import get_departments_by_domain
+        
+        departments = get_departments_by_domain(domain_id)
+        
+        department_list = [
+            {
+                "id": d[0],
+                "name": d[1]
+            }
+            for d in departments
+        ]
+        
+        return {"success": True, "departments": department_list}
+    except Exception as e:
+        print(f"❌ Departman listeleme hatası: {e}")
+        return {"success": False, "message": f"❌ Departman listeleme hatası: {e}"}
+
+# 📌 Departman ekleme
+@router.post("/add_department", 
+             summary="Yeni Departman Ekle",
+             description="Belirli bir domain'e yeni departman ekler")
+def add_department_endpoint(department: DepartmentCreateRequest):
+    try:
+        # Domain kontrolü
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s",
+            (department.domain_id, department.created_by)
+        )
+        count = cursor.fetchone()[0]
+        conn.close()
+        
+        if count == 0:
+            return {"success": False, "message": "❌ Bu domain'e erişim yetkiniz yok veya domain bulunamadı."}
+        
+        # Departman ekleme
+        from db_ops import add_department
+        
+        success, message, department_id = add_department(
+            domain_id=department.domain_id,
+            department_name=department.department_name,
+            created_by=department.created_by
+        )
+        
+        if success:
+            return {
+                "success": True, 
+                "message": message,
+                "department": {
+                    "id": department_id,
+                    "name": department.department_name,
+                    "domain_id": department.domain_id
+                }
+            }
+        else:
+            return {"success": False, "message": message}
+    except Exception as e:
+        print(f"❌ Departman ekleme hatası: {e}")
+        return {"success": False, "message": f"❌ Departman ekleme hatası: {e}"}
+
+# 📌 Departman güncelleme
+@router.put("/update_department/{domain_id}/{department_id}", 
+            summary="Departman Güncelle", 
+            description="Belirli bir departmanın bilgilerini günceller")
+def update_department_endpoint(domain_id: int, department_id: int, department: DepartmentUpdateRequest, 
+                              user_id: Optional[str] = Query(None)):
+    try:
+        # Kullanıcının bu domain'e erişim yetkisi var mı kontrol et
+        if user_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s",
+                (domain_id, user_id)
+            )
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            if count == 0:
+                return {"success": False, "message": "❌ Bu domain'e erişim yetkiniz yok veya domain bulunamadı."}
+        
+        # Departman güncelleme
+        from db_ops import update_department
+        
+        success, message = update_department(
+            department_id=department_id,
+            department_name=department.department_name,
+            domain_id=domain_id
+        )
+        
+        if success:
+            return {
+                "success": True, 
+                "message": message,
+                "department": {
+                    "id": department_id,
+                    "name": department.department_name,
+                    "domain_id": domain_id
+                }
+            }
+        else:
+            return {"success": False, "message": message}
+    except Exception as e:
+        print(f"❌ Departman güncelleme hatası: {e}")
+        return {"success": False, "message": f"❌ Departman güncelleme hatası: {e}"}
+
+# 📌 Departman silme
+@router.delete("/delete_department/{domain_id}/{department_id}", 
+              summary="Departman Sil", 
+              description="Belirli bir departmanı siler ve bağlı kullanıcıların departman bilgisini null yapar")
+def delete_department_endpoint(domain_id: int, department_id: int, 
+                             user_id: Optional[str] = Query(None)):
+    try:
+        # Kullanıcının bu domain'e erişim yetkisi var mı kontrol et
+        if user_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s",
+                (domain_id, user_id)
+            )
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            if count == 0:
+                return {"success": False, "message": "❌ Bu domain'e erişim yetkiniz yok veya domain bulunamadı."}
+        
+        # Departman silme
+        from db_ops import delete_department
+        
+        success, message = delete_department(
+            department_id=department_id,
+            domain_id=domain_id
+        )
+        
+        if success:
+            return {"success": True, "message": message}
+        else:
+            return {"success": False, "message": message}
+    except Exception as e:
+        print(f"❌ Departman silme hatası: {e}")
+        return {"success": False, "message": f"❌ Departman silme hatası: {e}"}
 
 # 📌 IP benzersizlik kontrol fonksiyonu
 def check_user_ip_exists(domain_ip: str, created_by: str):

@@ -4,6 +4,7 @@ from db_ops import get_db_connection
 import psycopg2
 import time
 from enum import Enum
+import bcrypt  # Bcrypt kütüphanesini ekliyoruz
 
 # Kullanıcı durumu enum tanımı
 class UserStatus(str, Enum):
@@ -16,6 +17,44 @@ class UserRole(int, Enum):
     USER = 2
     GUEST = 3
 
+# Şifre hashleme fonksiyonu
+def hash_password(plain_password):
+    """
+    Şifreyi güvenli bir şekilde hashler
+    
+    Args:
+        plain_password (str): Hashlenecek düz metin şifre
+        
+    Returns:
+        str: Hashlenmiş şifre (salt değeri ile birlikte)
+    """
+    # Şifreyi bytes'a çevir
+    password_bytes = plain_password.encode('utf-8')
+    # Salt üret ve şifreyi hashle (gensalt(12) = 2^12 rounds)
+    hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt(12))
+    # Hash'i string olarak döndür
+    return hashed.decode('utf-8')
+
+# Şifre doğrulama fonksiyonu
+def verify_password(plain_password, hashed_password):
+    """
+    Verilen şifrenin hash ile eşleşip eşleşmediğini kontrol eder
+    
+    Args:
+        plain_password (str): Kontrol edilecek düz metin şifre
+        hashed_password (str): Veritabanında saklanan hash
+        
+    Returns:
+        bool: Şifre eşleşiyorsa True, aksi halde False
+    """
+    try:
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception as e:
+        print(f"❌ Şifre doğrulama hatası: {e}")
+        return False
+
 def add_user_to_admin_group(conn_ldap, username, base_dn):
     user_dn = f"CN={username},CN=Users,{base_dn}"
     admin_group_dn = f"CN=Domain Admins,CN=Users,{base_dn}"
@@ -25,7 +64,7 @@ def add_user_to_admin_group(conn_ldap, username, base_dn):
     else:
         print(f"❌ {username} kullanıcısı Domain Admins grubuna eklenemedi: {conn_ldap.result}")
 
-def add_user(domain_id, username, first_name, last_name, password, role_id=2, department_id=None):
+def add_user(domain_id, username, first_name, last_name, password, role_id=2, department_id=None , created_by=None):
     conn_ldap, base_dn = get_ldap_connection_by_domain_id(domain_id)
     user_dn = f"CN={username},CN=Users,{base_dn}"
 
@@ -54,14 +93,17 @@ def add_user(domain_id, username, first_name, last_name, password, role_id=2, de
             status = 'devrede'
         else:
             print("⚠️ Şifre atanamadı, kullanıcı devre dışı kaldı.")
-            status = 'devre dışı'
-
+            status = 'devre dışı'        
         if role_id == 1:
             add_user_to_admin_group(conn_ldap, username, base_dn)
-
+            
         try:
             conn_db = get_db_connection()
             cursor = conn_db.cursor()
+            
+            # Şifreyi güvenli bir şekilde hashle
+            hashed_password = hash_password(password)
+            
             insert_query = """
                 INSERT INTO users (username, password, first_name, last_name, role_id, department_id, status, domain_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -74,7 +116,7 @@ def add_user(domain_id, username, first_name, last_name, password, role_id=2, de
                     status = EXCLUDED.status,
                     domain_id = EXCLUDED.domain_id
             """
-            cursor.execute(insert_query, (username, password, first_name, last_name, role_id, department_id, status, domain_id))
+            cursor.execute(insert_query, (username, hashed_password, first_name, last_name, role_id, department_id, status, domain_id))
             conn_db.commit()
             conn_db.close()
             print(f"✅ Supabase'e eklendi: {username}")
@@ -82,9 +124,10 @@ def add_user(domain_id, username, first_name, last_name, password, role_id=2, de
             print(f"❌ Supabase'e eklenemedi: {e}")
 
         return True, status
+    
     else:
         print(f"❌ LDAP'e eklenemedi: {conn_ldap.result}")
-        return False, "devre dışı"
+    return False, "devre dışı"
 
 def disable_user(domain_id, username, enable=False):
     conn_ldap, base_dn = get_ldap_connection_by_domain_id(domain_id)
@@ -231,10 +274,11 @@ def update_user(domain_id, username, first_name=None, last_name=None, password=N
         if last_name:
             db_changes.append("last_name = %s")
             params.append(last_name)
-        
         if password:
             db_changes.append("password = %s")
-            params.append(password)
+            # Şifreyi güvenli bir şekilde hashle
+            hashed_password = hash_password(password)
+            params.append(hashed_password)
         
         if role_id:
             db_changes.append("role_id = %s")
@@ -313,3 +357,91 @@ def get_users_by_domain(domain_id, status=None):
     except Exception as e:
         print(f"❌ Kullanıcı listeleme hatası: {e}")
         return []
+
+def authenticate_user(username, password, domain_id):
+    """
+    Kullanıcı girişini doğrular
+    
+    Args:
+        username (str): Kullanıcı adı
+        password (str): Şifre
+        domain_id (int): Domain ID
+        
+    Returns:
+        tuple: (bool, str) - Giriş başarılı mı, durum mesajı
+    """
+    try:
+        conn_db = get_db_connection()
+        cursor = conn_db.cursor()
+        
+        # Kullanıcıyı veritabanından bul
+        cursor.execute("""
+            SELECT id, username, password, status 
+            FROM users 
+            WHERE username = %s AND domain_id = %s
+        """, (username, domain_id))
+        
+        user = cursor.fetchone()
+        conn_db.close()
+        
+        if not user:
+            return False, "Kullanıcı bulunamadı"
+            
+        user_id = user[0]
+        stored_username = user[1]
+        stored_password_hash = user[2]
+        status = user[3]
+        
+        # Kullanıcı devre dışı ise giriş yapılamaz
+        if status == UserStatus.DISABLED.value:
+            return False, "Kullanıcı devre dışı"
+        
+        # Şifre doğrulama
+        if verify_password(password, stored_password_hash):
+            return True, f"Hoş geldiniz, {stored_username}!"
+        else:
+            return False, "Şifre hatalı"
+            
+    except Exception as e:
+        print(f"❌ Kullanıcı doğrulama hatası: {e}")
+        return False, f"Doğrulama hatası: {e}"
+
+def migrate_passwords_to_hash():
+    """
+    Veritabanındaki tüm şifreleri hashlere dönüştürür
+    """
+    try:
+        conn_db = get_db_connection()
+        cursor = conn_db.cursor()
+        
+        # Tüm kullanıcıları getir
+        cursor.execute("SELECT id, password FROM users")
+        users = cursor.fetchall()
+        
+        update_count = 0
+        
+        for user in users:
+            user_id = user[0]
+            plain_password = user[1]
+            
+            # Eğer şifre zaten hash değilse
+            try:
+                # Hash formatında şifre genellikle $2b$ ile başlar
+                if not plain_password.startswith('$2b$'):
+                    # Hashle
+                    hashed_password = hash_password(plain_password)
+                    
+                    # Veritabanına kaydet
+                    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (hashed_password, user_id))
+                    update_count += 1
+            except Exception as e:
+                print(f"❌ ID {user_id} için şifre dönüştürme hatası: {e}")
+        
+        conn_db.commit()
+        conn_db.close()
+        
+        print(f"✅ {update_count} kullanıcının şifresi güvenli hale getirildi")
+        return True, f"{update_count} şifre güncellendi"
+    except Exception as e:
+        print(f"❌ Şifre geçiş hatası: {e}")
+        return False, f"Geçiş hatası: {e}"
