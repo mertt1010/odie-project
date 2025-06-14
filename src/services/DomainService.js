@@ -344,6 +344,135 @@ const DomainService = {
       throw error;
     }
   },
+
+  /**
+   * Get all departments for a specific domain
+   * @param {string|number} domainId - The domain ID
+   * @param {string} userId - The user's UUID from Supabase
+   * @returns {Promise} - API response with departments data
+   */
+  listDepartmentsByDomain: async (domainId, userId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/list_departments_by_domain/${domainId}?user_id=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(
+        `Error fetching departments for domain ${domainId}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Add a new department to a domain
+   * @param {Object} departmentData - The department data to create
+   * @returns {Promise} - API response
+   */
+  addDepartment: async (departmentData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/add_department`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(departmentData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error adding department:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing department
+   * @param {string|number} domainId - The domain ID
+   * @param {string|number} departmentId - The department ID
+   * @param {Object} departmentData - The updated department data
+   * @param {string} userId - The user's UUID from Supabase
+   * @returns {Promise} - API response
+   */
+  updateDepartment: async (domainId, departmentId, departmentData, userId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/update_department/${domainId}/${departmentId}?user_id=${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(departmentData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error updating department ${departmentId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a department
+   * @param {string|number} domainId - The domain ID
+   * @param {string|number} departmentId - The department ID
+   * @param {string} userId - The user's UUID from Supabase
+   * @returns {Promise} - API response
+   */
+  deleteDepartment: async (domainId, departmentId, userId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/delete_department/${domainId}/${departmentId}?user_id=${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error deleting department ${departmentId}:`, error);
+      throw error;
+    }
+  },
 };
 
 export default DomainService;

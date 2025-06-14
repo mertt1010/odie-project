@@ -110,7 +110,7 @@ function AddDomainPage() {
         >
           <i className="bi bi-arrow-left"></i>
         </button>
-        Add New Domain
+        Add Domain
       </div>
 
       <div className="p-6">
@@ -298,7 +298,7 @@ function AddDomainPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+            <div className="flex md:justify-end justify-center space-x-4 pt-8 mt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate("/domains")}

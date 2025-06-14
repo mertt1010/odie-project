@@ -220,7 +220,7 @@ function EditDomainPage() {
         >
           <i className="bi bi-arrow-left"></i>
         </button>
-        Edit Domain - {originalDomain?.domain_name || "Loading..."}
+        Edit Domain
       </div>
 
       <div className="p-6">
@@ -236,7 +236,9 @@ function EditDomainPage() {
               Domain Information
             </h2>
             <p className="text-sm text-gray-600">
-              Update the domain details below
+              {originalDomain?.domain_name
+                ? `Editing domain "${originalDomain.domain_name}"`
+                : "Update the domain details below"}
             </p>
           </div>
 
@@ -392,7 +394,7 @@ function EditDomainPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+            <div className="flex md:justify-end justify-center space-x-4 pt-8 mt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate("/domains")}

@@ -126,12 +126,7 @@ function AddUserPage() {
         >
           <i className="bi bi-arrow-left"></i>
         </button>
-        Add New User
-        {domainName && (
-          <span className="ml-2 text-gray-600 text-lg font-normal">
-            to {domainName}
-          </span>
-        )}
+        Add User
       </div>
 
       <div className="p-6">
@@ -147,7 +142,9 @@ function AddUserPage() {
               User Information
             </h2>
             <p className="text-sm text-gray-600">
-              Fill in the details to create a new user
+              {domainName
+                ? `Creating a new user for domain "${domainName}"`
+                : "Fill in the details to create a new user"}
             </p>
           </div>
 
@@ -284,7 +281,7 @@ function AddUserPage() {
             <input type="hidden" name="domain_id" value={formData.domain_id} />
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+            <div className="flex md:justify-end justify-center space-x-4 pt-8 mt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate("/users")}

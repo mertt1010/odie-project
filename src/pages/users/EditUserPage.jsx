@@ -241,12 +241,7 @@ function EditUserPage() {
         >
           <i className="bi bi-arrow-left"></i>
         </button>
-        Edit User: {username}
-        {domainName && (
-          <span className="ml-2 text-gray-600 text-lg font-normal">
-            in {domainName}
-          </span>
-        )}
+        Edit User
       </div>
 
       <div className="p-6 space-y-6">
@@ -262,7 +257,11 @@ function EditUserPage() {
             <h2 className="text-lg font-semibold text-odie">
               User Information
             </h2>
-            <p className="text-sm text-gray-600">Update the user's details</p>
+            <p className="text-sm text-gray-600">
+              {username && domainName
+                ? `Editing user "${username}" in domain "${domainName}"`
+                : "Update the user's details"}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -395,7 +394,7 @@ function EditUserPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+            <div className="flex md:justify-end justify-center space-x-4 pt-8 mt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => navigate("/users")}
@@ -425,13 +424,13 @@ function EditUserPage() {
               </p>
             </div>
             <div className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between md:flex-row flex-col gap-4">
                 <div className="flex items-center gap-4">
-                  <div>
+                  <div className="flex md:flex-col flex-row gap-4 items-center md:items-start">
                     <h3 className="text-lg font-medium text-gray-900">
                       Current Status
                     </h3>
-                    <div className="mt-2">
+                    <div className="">
                       <span
                         className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${
                           originalUser.status === "devrede"
@@ -446,12 +445,12 @@ function EditUserPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 w-full md:w-auto">
                   {originalUser.status === "devrede" ? (
                     <button
                       onClick={handleDisableUser}
                       disabled={loading}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="md:w-auto w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
                       {loading && (
                         <i className="bi bi-arrow-repeat animate-spin"></i>
@@ -463,7 +462,7 @@ function EditUserPage() {
                     <button
                       onClick={handleEnableUser}
                       disabled={loading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="md:w-auto w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
                       {loading && (
                         <i className="bi bi-arrow-repeat animate-spin"></i>

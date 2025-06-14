@@ -28,6 +28,7 @@ function SideBar() {
     if (location.pathname === "/" || location.pathname === "/domains")
       return "Domains";
     if (location.pathname === "/users") return "Users";
+    if (location.pathname === "/departments") return "Departments";
     return "";
   };
 
@@ -83,6 +84,19 @@ function SideBar() {
               }`}
             ></i>
           </Link>
+
+          <Link
+            to="/departments"
+            className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300 hover:bg-gray-100"
+          >
+            <i
+              className={`${
+                isActive("/departments")
+                  ? "bi bi-building-fill"
+                  : "bi bi-building"
+              }`}
+            ></i>
+          </Link>
         </div>
 
         {isAuthenticated && (
@@ -134,6 +148,21 @@ function SideBar() {
               } mr-3`}
             ></i>
             <span>Users</span>
+          </Link>
+
+          <Link
+            to="/departments"
+            className="text-odie w-full h-16 text-xl flex items-center px-6 border-b border-gray-100 hover:bg-gray-50"
+            onClick={() => setIsOpen(false)}
+          >
+            <i
+              className={`${
+                isActive("/departments")
+                  ? "bi bi-building-fill"
+                  : "bi bi-building"
+              } mr-3`}
+            ></i>
+            <span>Departments</span>
           </Link>
 
           {isAuthenticated && (

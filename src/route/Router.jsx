@@ -4,6 +4,9 @@ import EditDomainPage from "../pages/domains/EditDomainPage";
 import UsersPage from "../pages/users/UsersPage";
 import AddUserPage from "../pages/users/AddUserPage";
 import EditUserPage from "../pages/users/EditUserPage";
+import DepartmentsPage from "../pages/departments/DepartmentsPage";
+import AddDepartmentPage from "../pages/departments/AddDepartmentPage";
+import EditDepartmentPage from "../pages/departments/EditDepartmentPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
 
@@ -15,6 +18,12 @@ export const RouterList = [
   { path: "/users", element: <UsersPage /> },
   { path: "/users/add", element: <AddUserPage /> },
   { path: "/users/edit", element: <EditUserPage /> },
+  { path: "/departments", element: <DepartmentsPage /> },
+  { path: "/departments/add", element: <AddDepartmentPage /> },
+  {
+    path: "/departments/edit/:domainId/:departmentId",
+    element: <EditDepartmentPage />,
+  },
 ];
 
 export const AuthRoutes = [
