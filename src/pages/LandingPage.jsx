@@ -119,7 +119,7 @@ function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-gray-50 to-white h-[calc(100dvh-64px)] flex items-center justify-center">
+      <section className="relative bg-gradient-to-br from-odie/45 to-white h-[calc(100dvh-64px)] flex items-center justify-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl lg:text-6xl font-bold text-gray-900 mb-6">
