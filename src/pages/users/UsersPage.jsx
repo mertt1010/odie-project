@@ -14,6 +14,9 @@ function UsersPage() {
   const [passwordVisibility, setPasswordVisibility] = useState({});
   const [searchResults, setSearchResults] = useState([]);
   const [departments, setDepartments] = useState([]);
+  // Sorting states
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+  const [domainSortConfigs, setDomainSortConfigs] = useState({});
   const { user } = useAuth();
 
   // Helper function to get department name by ID
@@ -212,8 +215,91 @@ function UsersPage() {
     );
   };
 
+  // Sorting functions
+  const handleSort = (column) => {
+    let direction = "asc";
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key: column, direction });
+  };
+
+  const handleDomainSort = (domainId, column) => {
+    const currentConfig = domainSortConfigs[domainId] || {
+      key: null,
+      direction: null,
+    };
+    let direction = "asc";
+    if (currentConfig.key === column && currentConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setDomainSortConfigs((prev) => ({
+      ...prev,
+      [domainId]: { key: column, direction },
+    }));
+  };
+
+  const sortData = (data, config) => {
+    if (!config.key) return data;
+
+    return [...data].sort((a, b) => {
+      let aValue = a[config.key];
+      let bValue = b[config.key];
+
+      // Handle special cases
+      if (config.key === "department_id") {
+        aValue = getDepartmentName(a.department_id);
+        bValue = getDepartmentName(b.department_id);
+      } else if (config.key === "status") {
+        aValue = a.status === "devrede" ? "Active" : "Inactive";
+        bValue = b.status === "devrede" ? "Active" : "Inactive";
+      } else if (config.key === "domainName") {
+        aValue = a.domainName || "";
+        bValue = b.domainName || "";
+      }
+
+      // Convert to string and make case insensitive
+      aValue = String(aValue || "").toLowerCase();
+      bValue = String(bValue || "").toLowerCase();
+
+      if (config.direction === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  };
+
+  const renderSortableHeader = (column, label, sortConfig, onSort) => {
+    const getSortIcon = () => {
+      if (sortConfig.key !== column) {
+        return <i className="bi bi-arrow-down-up text-xs ml-1 opacity-50"></i>;
+      }
+      return sortConfig.direction === "asc" ? (
+        <i className="bi bi-arrow-up text-xs ml-1"></i>
+      ) : (
+        <i className="bi bi-arrow-down text-xs ml-1"></i>
+      );
+    };
+
+    return (
+      <th
+        scope="col"
+        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+        onClick={() => onSort(column)}
+      >
+        <div className="flex items-center">
+          {label}
+          {getSortIcon()}
+        </div>
+      </th>
+    );
+  };
+
   // Render search results table when searching
   const renderSearchResultsTable = () => {
+    const sortedSearchResults = sortData(searchResults, sortConfig);
+
     return (
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 bg-gray-50">
@@ -228,54 +314,54 @@ function UsersPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Domain
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Username
-                </th>
+                {renderSortableHeader(
+                  "domainName",
+                  "Domain",
+                  sortConfig,
+                  handleSort
+                )}
+                {renderSortableHeader(
+                  "username",
+                  "Username",
+                  sortConfig,
+                  handleSort
+                )}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Password
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  First Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Last Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Department
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Role
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
+                {renderSortableHeader(
+                  "first_name",
+                  "First Name",
+                  sortConfig,
+                  handleSort
+                )}
+                {renderSortableHeader(
+                  "last_name",
+                  "Last Name",
+                  sortConfig,
+                  handleSort
+                )}
+                {renderSortableHeader(
+                  "department_id",
+                  "Department",
+                  sortConfig,
+                  handleSort
+                )}
+                {renderSortableHeader(
+                  "role_id",
+                  "Role",
+                  sortConfig,
+                  handleSort
+                )}
+                {renderSortableHeader(
+                  "status",
+                  "Status",
+                  sortConfig,
+                  handleSort
+                )}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -285,7 +371,7 @@ function UsersPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {searchResults.map((user) => (
+              {sortedSearchResults.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
                     {user.domainName}
@@ -496,48 +582,66 @@ function UsersPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Username
-                        </th>
+                        {renderSortableHeader(
+                          "username",
+                          "Username",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Password
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          First Name
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Last Name
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Department
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Role
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          Status
-                        </th>
+                        {renderSortableHeader(
+                          "first_name",
+                          "First Name",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
+                        {renderSortableHeader(
+                          "last_name",
+                          "Last Name",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
+                        {renderSortableHeader(
+                          "department_id",
+                          "Department",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
+                        {renderSortableHeader(
+                          "role_id",
+                          "Role",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
+                        {renderSortableHeader(
+                          "status",
+                          "Status",
+                          domainSortConfigs[domain.id] || {
+                            key: null,
+                            direction: null,
+                          },
+                          (column) => handleDomainSort(domain.id, column)
+                        )}
                         <th
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -547,7 +651,13 @@ function UsersPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {domain.users.map((user) => (
+                      {sortData(
+                        domain.users,
+                        domainSortConfigs[domain.id] || {
+                          key: null,
+                          direction: null,
+                        }
+                      ).map((user) => (
                         <tr key={user.id}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-odie">
                             {user.username}

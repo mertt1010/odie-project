@@ -40,9 +40,17 @@ function EditUserPage() {
       try {
         setLoadingData(true);
 
-        // Load departments
-        const departmentsResponse = await DomainService.listDepartments();
-        setDepartments(departmentsResponse.departments || []);
+        // Load departments for the specific domain
+        if (domainId && user) {
+          const departmentsResponse =
+            await DomainService.listDepartmentsByDomain(
+              parseInt(domainId),
+              user.id
+            );
+          setDepartments(departmentsResponse.departments || []);
+        } else {
+          setDepartments([]);
+        }
 
         // Load user data from the domain
         if (domainId && username) {
@@ -76,7 +84,7 @@ function EditUserPage() {
     };
 
     loadData();
-  }, [domainId, username]);
+  }, [domainId, username, user]);
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -391,6 +399,12 @@ function EditUserPage() {
                   </option>
                 ))}
               </select>
+              {departments.length === 0 && (
+                <p className="text-sm text-gray-500 mt-1">
+                  No departments found for this domain. Please add departments
+                  first.
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}

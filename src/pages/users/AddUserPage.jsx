@@ -37,8 +37,16 @@ function AddUserPage() {
     const loadDepartments = async () => {
       try {
         setLoadingData(true);
-        const response = await DomainService.listDepartments();
-        setDepartments(response.departments || []);
+        // Only load departments for the specific domain
+        if (domainId && user) {
+          const response = await DomainService.listDepartmentsByDomain(
+            parseInt(domainId),
+            user.id
+          );
+          setDepartments(response.departments || []);
+        } else {
+          setDepartments([]);
+        }
         setError(null);
       } catch (err) {
         console.error("Error fetching departments:", err);
@@ -49,7 +57,7 @@ function AddUserPage() {
     };
 
     loadDepartments();
-  }, []);
+  }, [domainId, user]);
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -275,6 +283,12 @@ function AddUserPage() {
                   </option>
                 ))}
               </select>
+              {departments.length === 0 && (
+                <p className="text-sm text-gray-500 mt-1">
+                  No departments found for this domain. Please add departments
+                  first.
+                </p>
+              )}
             </div>
 
             {/* Domain ID (Hidden field, populated from URL params) */}
