@@ -230,11 +230,11 @@ function DepartmentsPage() {
               className="border-b border-gray-200 p-4"
             >
               <div className="flex justify-between items-center mb-3">
-                <div>
-                  <h3 className="font-medium text-odie text-lg">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-odie text-lg truncate">
                     {department.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 truncate">
                     {department.domainName}
                   </p>
                 </div>
@@ -270,26 +270,28 @@ function DepartmentsPage() {
         className="bg-white rounded-lg shadow overflow-hidden m-6"
       >
         <div
-          className="px-6 py-4 cursor-pointer flex justify-between items-center bg-gray-50 hover:bg-gray-100"
+          className="px-4 md:px-6 py-4 cursor-pointer flex justify-between items-center bg-gray-50 hover:bg-gray-100"
           onClick={() => toggleDomain(domain.id)}
         >
-          <div>
-            <h2 className="text-lg font-semibold text-odie">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base md:text-lg font-semibold text-odie truncate">
               {domain.domain_name}
             </h2>
-            <p className="text-sm text-gray-600">{domain.domain_ip}</p>
+            <p className="text-xs md:text-sm text-gray-600 truncate">
+              {domain.domain_ip}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleAddDepartment(domain);
               }}
-              className="text-odie hover:text-gray-600 flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
+              className="text-odie hover:text-gray-600 flex items-center gap-1 md:gap-2 text-sm font-medium px-2 md:px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
               title="Add Department to this Domain"
             >
-              <i className="bi bi-building-add text-lg"></i>
-              <span>Add Department</span>
+              <i className="bi bi-building-add text-base md:text-lg"></i>
+              <span className="hidden sm:inline">Add Department</span>
             </button>
             <div className="text-odie">
               <i
@@ -297,7 +299,7 @@ function DepartmentsPage() {
                   expandedDomain === domain.id
                     ? "bi-chevron-up"
                     : "bi-chevron-down"
-                } text-xl`}
+                } text-lg md:text-xl`}
               ></i>
             </div>
           </div>
@@ -357,7 +359,7 @@ function DepartmentsPage() {
                       className="border-b border-gray-200 p-4 first:border-t"
                     >
                       <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-medium text-odie text-lg">
+                        <h3 className="font-medium text-odie text-lg truncate flex-1 min-w-0">
                           {department.name}
                         </h3>
                       </div>

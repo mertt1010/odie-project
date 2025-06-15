@@ -450,14 +450,16 @@ function UsersPage() {
           {searchResults.map((user) => (
             <div key={user.id} className="border-b border-gray-200 p-4">
               <div className="flex justify-between items-center mb-3">
-                <div>
-                  <h3 className="font-medium text-odie text-lg">
+                <div className="flex-1 min-w-0 mr-3">
+                  <h3 className="font-medium text-odie text-lg truncate">
                     {user.username}
                   </h3>
-                  <p className="text-sm text-gray-600">{user.domainName}</p>
+                  <p className="text-sm text-gray-600 truncate">
+                    {user.domainName}
+                  </p>
                 </div>
                 <span
-                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
                     user.status === "devrede"
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
@@ -470,27 +472,27 @@ function UsersPage() {
               <div className="space-y-4 text-sm">
                 <div>
                   <p className="text-gray-500 mb-1 font-medium">Name:</p>
-                  <p className="font-medium break-words">
+                  <p className="font-medium truncate">
                     {user.first_name || "-"} {user.last_name || "-"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 mb-1 font-medium">Department:</p>
-                  <p className="font-medium break-words">
+                  <p className="font-medium truncate">
                     {getDepartmentName(user.department_id)}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 mb-1 font-medium">Role:</p>
-                  <p className="font-medium break-words">{user.role_id}</p>
+                  <p className="font-medium truncate">{user.role_id}</p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 mb-1 font-medium">Password:</p>
                   <div className="flex items-center">
-                    <p className="font-medium break-words mr-2">
+                    <p className="font-medium truncate mr-2 flex-1 min-w-0">
                       {passwordVisibility[user.id] ? user.password : "••••••••"}
                     </p>
                     <button
@@ -540,26 +542,28 @@ function UsersPage() {
         className="bg-white rounded-lg shadow overflow-hidden m-6"
       >
         <div
-          className="px-6 py-4 cursor-pointer flex justify-between items-center bg-gray-50 hover:bg-gray-100"
+          className="px-4 md:px-6 py-4 cursor-pointer flex justify-between items-center bg-gray-50 hover:bg-gray-100"
           onClick={() => toggleDomain(domain.id)}
         >
-          <div>
-            <h2 className="text-lg font-semibold text-odie">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base md:text-lg font-semibold text-odie truncate">
               {domain.domain_name}
             </h2>
-            <p className="text-sm text-gray-600">{domain.domain_ip}</p>
+            <p className="text-xs md:text-sm text-gray-600 truncate">
+              {domain.domain_ip}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleAddUser(domain);
               }}
-              className="text-odie hover:text-gray-600 flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
+              className="text-odie hover:text-gray-600 flex items-center gap-1 md:gap-2 text-sm font-medium px-2 md:px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
               title="Add User to this Domain"
             >
-              <i className="bi bi-person-plus text-lg"></i>
-              <span>Add User</span>
+              <i className="bi bi-person-plus text-base md:text-lg"></i>
+              <span className="hidden sm:inline">Add User</span>
             </button>
             <div className="text-odie">
               <i
@@ -567,7 +571,7 @@ function UsersPage() {
                   expandedDomain === domain.id
                     ? "bi-chevron-up"
                     : "bi-chevron-down"
-                } text-xl`}
+                } text-lg md:text-xl`}
               ></i>
             </div>
           </div>
@@ -734,11 +738,11 @@ function UsersPage() {
                       className="border-b border-gray-200 p-4 first:border-t"
                     >
                       <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-medium text-odie text-lg">
+                        <h3 className="font-medium text-odie text-lg truncate flex-1 min-w-0 mr-3">
                           {user.username}
                         </h3>
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
                             user.status === "devrede"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
@@ -753,7 +757,7 @@ function UsersPage() {
                           <p className="text-gray-500 mb-1 font-medium">
                             Name:
                           </p>
-                          <p className="font-medium break-words">
+                          <p className="font-medium truncate">
                             {user.first_name || "-"} {user.last_name || "-"}
                           </p>
                         </div>
@@ -762,7 +766,7 @@ function UsersPage() {
                           <p className="text-gray-500 mb-1 font-medium">
                             Department:
                           </p>
-                          <p className="font-medium break-words">
+                          <p className="font-medium truncate">
                             {getDepartmentName(user.department_id)}
                           </p>
                         </div>
@@ -771,9 +775,7 @@ function UsersPage() {
                           <p className="text-gray-500 mb-1 font-medium">
                             Role:
                           </p>
-                          <p className="font-medium break-words">
-                            {user.role_id}
-                          </p>
+                          <p className="font-medium truncate">{user.role_id}</p>
                         </div>
 
                         <div>
@@ -781,7 +783,7 @@ function UsersPage() {
                             Password:
                           </p>
                           <div className="flex items-center">
-                            <p className="font-medium break-words mr-2">
+                            <p className="font-medium truncate mr-2 flex-1 min-w-0">
                               {passwordVisibility[user.id]
                                 ? user.password
                                 : "••••••••"}
