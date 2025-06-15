@@ -1,0 +1,42 @@
+[
+  {
+    "serverIp": "192.168.1.100",
+    "serverName": "AppServer01"
+  },
+  {
+    "serverIp": "192.168.1.101",
+    "serverName": "DatabaseServer01"
+  },
+  {
+    "serverIp": "192.168.1.102",
+    "serverName": "WebServer01"
+  },
+  {
+    "serverIp": "192.168.1.103",
+    "serverName": "FileServer01"
+  },
+  {
+    "serverIp": "192.168.1.104",
+    "serverName": "BackupServer01"
+  },
+  {
+    "serverIp": "192.168.1.105",
+    "serverName": "TestServer01"
+  },
+  {
+    "serverIp": "192.168.1.106",
+    "serverName": "DevServer01"
+  },
+  {
+    "serverIp": "192.168.1.107",
+    "serverName": "MailServer01"
+  },
+  {
+    "serverIp": "192.168.1.108",
+    "serverName": "ProxyServer01"
+  },
+  {
+    "serverIp": "192.168.1.109",
+    "serverName": "MonitoringServer01"
+  }
+]
