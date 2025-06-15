@@ -25,10 +25,10 @@ function SideBar() {
   };
 
   const getPageTitle = () => {
-    if (location.pathname === "/" || location.pathname === "/domains")
+    if (location.pathname === "/" || location.pathname.startsWith("/domains"))
       return "Domains";
-    if (location.pathname === "/users") return "Users";
-    if (location.pathname === "/departments") return "Departments";
+    if (location.pathname.startsWith("/users")) return "Users";
+    if (location.pathname.startsWith("/departments")) return "Departments";
     return "";
   };
 

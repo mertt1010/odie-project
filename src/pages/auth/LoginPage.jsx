@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthService from "../../services/AuthService";
 import odieIcon from "../../assets/img/icon.png";
@@ -21,7 +21,7 @@ function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        navigate("/");
+        navigate("/domains");
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -32,8 +32,8 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-md">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-10">
         <div className="flex flex-col items-center">
           <img src={odieIcon} alt="Odie Logo" className="w-16 h-16 mb-2" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -95,7 +95,7 @@ function LoginPage() {
 
           <div className="text-sm text-center">
             <p>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 to="/signup"
                 className="font-medium text-[#556ac6] hover:text-[#4a5db3]"

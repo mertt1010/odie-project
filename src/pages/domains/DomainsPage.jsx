@@ -108,7 +108,7 @@ function DomainsPage() {
         <div className="flex items-center gap-4 md:flex-row flex-col w-full md:w-auto">
           <button
             onClick={handleAddDomain}
-            className="bg-transparent text-[16px] font-medium text-odie rounded-md hover:text-gray-600 md:border-none border md:p-0 p-2 md:w-auto w-full border-gray-300 cursor-pointer"
+            className="bg-odie md:bg-transparent md:text-odie text-[16px] font-medium text-white rounded-md hover:text-gray-600 w-full md:p-0 p-2 md:w-auto w-fullcursor-pointer"
           >
             <i className="bi bi-plus-lg"></i> Add Domain
           </button>

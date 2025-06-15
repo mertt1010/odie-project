@@ -9,9 +9,9 @@ import AddDepartmentPage from "../pages/departments/AddDepartmentPage";
 import EditDepartmentPage from "../pages/departments/EditDepartmentPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
+import LandingPage from "../pages/LandingPage";
 
 export const RouterList = [
-  { path: "/", element: <DomainsPage /> },
   { path: "/domains", element: <DomainsPage /> },
   { path: "/domains/add", element: <AddDomainPage /> },
   { path: "/domains/edit/:domainId", element: <EditDomainPage /> },
@@ -27,6 +27,8 @@ export const RouterList = [
 ];
 
 export const AuthRoutes = [
+  { path: "/", element: <LandingPage /> },
+  { path: "/landing", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignupPage /> },
 ];

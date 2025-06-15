@@ -49,8 +49,8 @@ function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-md">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-10">
         <div className="flex flex-col items-center">
           <img src={odieIcon} alt="Odie Logo" className="w-16 h-16 mb-2" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
