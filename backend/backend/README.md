@@ -1,9 +1,7 @@
+🧠 ODIE - LDAP ve Supabase Kullanıcı Yönetimi Aracı (📊 Log Sistemi Dahil)
+==================================================================================
 
-
-🧠 ODIE - LDAP ve Supabase Kullanıcı Yönetimi Aracı
-==============================================
-
-Bu proje, Active Directory (LDAP) ortamındaki kullanıcıların yönetilmesini ve bu kullanıcıların Supabase veritabanıyla senkronize edilmesini sağlayan bir Python uygulamasıdır. API ve CLI arayüzleri ile çalışabilir.
+Bu proje, Active Directory (LDAP) ortamındaki kullanıcıların yönetilmesini ve bu kullanıcıların Supabase veritabanıyla senkronize edilmesini sağlayan bir Python uygulamasıdır. API ve CLI arayüzleri ile çalışabilir. **Tüm API işlemleri otomatik olarak log sistemi ile kayıt altına alınır.**
 
 ## 🎯 Amaç
 
@@ -13,10 +11,22 @@ ODIE, sistem yöneticilerine aşağıdaki işlevleri sağlar:
 - LDAP üzerindeki kullanıcıları Supabase PostgreSQL veritabanı ile senkronize etme
 - Birden fazla domain ve LDAP sunucu bağlantısı yönetme
 - Rol ve departman bazlı kullanıcı kategorilendirme
+- **📊 Tüm API işlemlerinin otomatik log kaydı ve görüntüleme**
 
 Tüm işlemler bir terminal menüsü veya API ile kolayca yönetilebilir.
 
 ## ⚙️ Özellikler
+
+### 📊 Log Sistemi (YENİ!)
+
+- ✅ **Otomatik API Log Kayıtları**
+  - Tüm endpoint çağrıları otomatik kaydedilir
+  - Request/Response verileri, başarı durumu, hata mesajları
+  - Kullanıcı ve domain bazlı filtreleme
+  
+- ✅ **Basit Log Görüntüleme**
+  - `GET /api/logs` endpoint'i ile tüm logları görüntüleme
+  - Kullanıcı, endpoint, limit/offset filtreleme desteği
 
 ### 🔒 Domain Yönetimi
 
@@ -111,6 +121,7 @@ uvicorn server:app --reload
 | /enable_user | POST | Kullanıcıyı etkinleştirir |
 | /delete_user | DELETE | Kullanıcıyı siler |
 | /list_departments | GET | Departmanları listeler |
+| /api/logs | GET | Log kayıtlarını listeler |
 
 ## 👨‍💻 Örnek Kullanım
 
@@ -148,6 +159,16 @@ response = requests.get(
 print(response.json())
 ```
 
+### API ile Log Kayıtlarını Görüntüleme
+
+```python
+response = requests.get(
+    "http://localhost:8000/api/logs?limit=10&offset=0"
+)
+
+print(response.json())
+```
+
 ## 🔮 Gelecek Özellikler
 
 - AD gruplarının yönetimi
@@ -160,3 +181,130 @@ print(response.json())
 
 - LDAP şifreleri ve bağlantı bilgileri güvenli şekilde saklanmalıdır
 - Veritabanı bağlantı bilgileri çevresel değişkenler (environment variables) olarak kullanılabilir
+
+## 📊 Log Sistemi Kurulumu
+
+### 1. Supabase'de Log Tablosu Oluşturma
+
+Supabase SQL Editor'de aşağıdaki SQL komutunu çalıştırın:
+
+```sql
+-- API işlemlerini kaydetmek için basit log tablosu
+CREATE TABLE api_logs (
+    id SERIAL PRIMARY KEY,
+    endpoint VARCHAR(255) NOT NULL,                    -- Hangi endpoint çağrıldı
+    method VARCHAR(10) NOT NULL,                       -- HTTP method (GET, POST, PUT, DELETE)
+    user_id VARCHAR(255),                              -- İşlemi yapan kullanıcı ID'si
+    domain_id INTEGER,                                 -- İlgili domain ID'si (varsa)
+    request_data JSONB,                                -- Gönderilen request verisi
+    response_data JSONB,                               -- Dönen response verisi
+    success BOOLEAN DEFAULT true,                      -- İşlem başarılı mı
+    error_message TEXT,                                -- Hata mesajı (varsa)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() -- İşlem zamanı
+);
+
+-- Performans için indeksler
+CREATE INDEX idx_api_logs_created_at ON api_logs (created_at DESC);
+CREATE INDEX idx_api_logs_user_id ON api_logs (user_id);
+CREATE INDEX idx_api_logs_endpoint ON api_logs (endpoint);
+CREATE INDEX idx_api_logs_success ON api_logs (success);
+```
+
+### 2. Log Görüntüleme API'si
+
+Log kayıtlarını görüntülemek için aşağıdaki endpoint'i kullanın:
+
+```bash
+# Tüm logları getir
+GET /api/logs
+
+# Parametreli kullanım
+GET /api/logs?user_id=USER_UUID&endpoint=add_user&limit=50&offset=0
+```
+
+#### Örnek Response:
+
+```json
+{
+  "success": true,
+  "logs": [
+    {
+      "id": 123,
+      "endpoint": "/add_user",
+      "method": "POST",
+      "user_id": "user-uuid-123",
+      "domain_id": 1,
+      "request_data": {
+        "username": "john.doe",
+        "first_name": "John",
+        "last_name": "Doe"
+      },
+      "response_data": {
+        "success": true,
+        "status": "Kullanıcı başarıyla eklendi"
+      },
+      "success": true,
+      "error_message": null,
+      "created_at": "2024-12-26T10:30:00Z"
+    }
+  ],
+  "total_count": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### 3. Log Sistemi Test
+
+Log sistemini test etmek için:
+
+```bash
+# Test dosyasını çalıştır
+python test_log_system.py
+
+# Veya manuel test
+curl "http://localhost:8000/api/logs?limit=5"
+```
+
+### 4. Loglanacak İşlemler
+
+Aşağıdaki API endpoint'leri otomatik olarak loglanır:
+
+- ✅ `POST /add_user` - Kullanıcı ekleme
+- ✅ `POST /disable_user` - Kullanıcı devre dışı bırakma  
+- ✅ `POST /enable_user` - Kullanıcı devreye alma
+- ✅ `DELETE /delete_user` - Kullanıcı silme
+- ✅ `POST /list_users_by_department` - Departman kullanıcıları listeleme
+- ✅ `POST /add_domain` - Domain ekleme
+- ✅ `GET /list_domains` - Domain listeleme
+- ✅ `DELETE /delete_domain/{id}` - Domain silme
+
+### 5. Log Kayıt Formatı
+
+Her log kaydı şu bilgileri içerir:
+
+- **endpoint**: Çağrılan API yolu
+- **method**: HTTP method (GET, POST, PUT, DELETE)
+- **user_id**: İşlemi yapan kullanıcı ID'si
+- **domain_id**: İlgili domain ID'si (varsa)
+- **request_data**: Gönderilen request verisi
+- **response_data**: Dönen response verisi
+- **success**: İşlem başarılı mı (true/false)
+- **error_message**: Hata mesajı (varsa)
+- **created_at**: İşlem zamanı
+
+## 🚀 Hızlı Başlangıç (Log Sistemi Dahil)
+
+1. **Supabase'de tabloları oluşturun** (yukarıdaki SQL)
+2. **Server'ı başlatın:**
+   ```bash
+   uvicorn server:app --reload --port 8000
+   ```
+3. **API'yi test edin:**
+   ```bash
+   python test_log_system.py
+   ```
+4. **Log kayıtlarını görüntüleyin:**
+   ```bash
+   curl "http://localhost:8000/api/logs?limit=10"
+   ```

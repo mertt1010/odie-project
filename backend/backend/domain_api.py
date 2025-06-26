@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Optional
 import re
 import psycopg2
+from log_system import APILogger
 
 router = APIRouter()
 
@@ -123,20 +124,61 @@ def add_domain(domain: DomainCreateRequest):
         conn_db.commit()
         conn_db.close()
 
-        return {"success": True, "message": "✅ Domain başarıyla eklendi"}
+        response = {"success": True, "message": "✅ Domain başarıyla eklendi"}
+        
+        # Log kaydet
+        APILogger.log_operation(
+            endpoint="/add_domain",
+            method="POST",
+            operation_type="domain",
+            user_id=domain.created_by,
+            request_data=domain.dict(),
+            response_data=response,
+            success=True
+        )
+
+        return response
     except psycopg2.IntegrityError as e:
         # 🛡️ Veritabanı constraint violation yakalandı
         if "unique_ip_per_user" in str(e):
-            return {
+            error_response = {
                 "success": False,
                 "message": f"❌ Bu IP adresi ({domain.domain_ip}) ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
             }
         else:
             print(f"❌ Veritabanı bütünlük hatası: {e}")
-            return {"success": False, "message": f"❌ Veritabanı hatası: Domain eklenemedi"}
+            error_response = {"success": False, "message": f"❌ Veritabanı hatası: Domain eklenemedi"}
+        
+        # Hata log'u kaydet
+        APILogger.log_operation(
+            endpoint="/add_domain",
+            method="POST",
+            operation_type="domain",
+            user_id=domain.created_by,
+            request_data=domain.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
     except Exception as e:
         print(f"❌ Hata: {e}")
-        return {"success": False, "message": f"❌ Hata: {e}"}
+        error_response = {"success": False, "message": f"❌ Hata: {e}"}
+        
+        # Hata log'u kaydet
+        APILogger.log_operation(
+            endpoint="/add_domain",
+            method="POST",
+            operation_type="domain",
+            user_id=domain.created_by,
+            request_data=domain.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Domain güncelleme
 @router.put("/update_domain/{domain_id}", 
@@ -242,7 +284,7 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
         conn.close()
         
         if updated_domain:
-            return {
+            response = {
                 "success": True, 
                 "message": "✅ Domain başarıyla güncellendi",
                 "domain": {
@@ -256,56 +298,122 @@ def update_domain(domain_id: int, domain: DomainUpdateRequest, user_id: Optional
                     "ldap_password": updated_domain[7]
                 }
             }
+            
+            # Log kaydet
+            APILogger.log_operation(
+                endpoint="/update_domain",
+                method="PUT",
+                operation_type="domain",
+                user_id=user_id,
+                request_data=domain.dict(),
+                response_data=response,
+                success=True
+            )
+            
+            return response
         else:
-            return {"success": False, "message": "❌ Domain güncellenemedi."}
+            error_response = {"success": False, "message": "❌ Domain güncellenemedi."}
+            
+            # Hata log'u kaydet
+            APILogger.log_operation(
+                endpoint="/update_domain",
+                method="PUT",
+                operation_type="domain",
+                user_id=user_id,
+                request_data=domain.dict(),
+                response_data=error_response,
+                success=False,
+                error_message="Domain güncellenemedi"
+            )
+            
+            return error_response
     except psycopg2.IntegrityError as e:
         # 🛡️ Veritabanı constraint violation yakalandı
         if "unique_ip_per_user" in str(e):
-            return {
+            error_response = {
                 "success": False,
                 "message": f"❌ Bu IP adresi ile zaten bir domain'iniz bulunmaktadır. Aynı kullanıcı aynı IP ile birden fazla domain oluşturamaz."
             }
         else:
             print(f"❌ Veritabanı bütünlük hatası: {e}")
-            return {"success": False, "message": f"❌ Veritabanı hatası: Domain güncellenemedi"}
+            error_response = {"success": False, "message": f"❌ Veritabanı hatası: Domain güncellenemedi"}
+        
+        # Integrity error log'u kaydet
+        APILogger.log_operation(
+            endpoint="/update_domain",
+            method="PUT",
+            operation_type="domain",
+            user_id=user_id,
+            request_data=domain.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
     except Exception as e:
         print(f"❌ Güncelleme hatası: {e}")
-        return {"success": False, "message": f"❌ Güncelleme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Güncelleme hatası: {e}"}
+        
+        # Exception log'u kaydet
+        APILogger.log_operation(
+            endpoint="/update_domain",
+            method="PUT",
+            operation_type="domain",
+            user_id=user_id,
+            request_data=domain.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Domainleri listeleme
 @router.get("/list_domains")
 def list_domains(user_id: Optional[str] = Query(None)):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    if user_id:
-        # Kullanıcıya ait domainleri filtrele
-        cursor.execute("""
-            SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password
-            FROM domains 
-            WHERE created_by = %s
-        """, (user_id,))
-    else:
-        # Admin için tüm domainleri listele
-        cursor.execute("SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password FROM domains")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
-    domains = cursor.fetchall()
-    conn.close()
+        if user_id:
+            # Kullanıcıya ait domainleri filtrele
+            cursor.execute("""
+                SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password
+                FROM domains 
+                WHERE created_by = %s
+            """, (user_id,))
+        else:
+            # Admin için tüm domainleri listele
+            cursor.execute("SELECT id, domain_name, domain_type, status, domain_ip, domain_component, ldap_user, ldap_password FROM domains")
+            
+        domains = cursor.fetchall()
+        conn.close()
 
-    domain_list = [
-        {
-            "id": d[0],
-            "domain_name": d[1],
-            "domain_type": d[2],
-            "status": d[3],
-            "domain_ip": d[4],
-            "domain_component": d[5],
-            "ldap_user": d[6],
-            "ldap_password": d[7]
-        }
-        for d in domains
-    ]
-    return {"domains": domain_list}
+        domain_list = [
+            {
+                "id": d[0],
+                "domain_name": d[1],
+                "domain_type": d[2],
+                "status": d[3],
+                "domain_ip": d[4],
+                "domain_component": d[5],
+                "ldap_user": d[6],
+                "ldap_password": d[7]
+            }
+            for d in domains
+        ]
+        
+        response = {"domains": domain_list}
+        
+        # GET işlemi olduğu için log kaydı yapılmıyor
+        return response
+        
+    except Exception as e:
+        error_response = {"success": False, "message": f"Domain listeleme hatası: {e}"}
+        
+        # GET işlemi olduğu için hata durumunda da log kaydı yapılmıyor
+        return error_response
 
 # 📌 Domain silme
 @router.delete("/delete_domain/{domain_id}")
@@ -319,15 +427,58 @@ def delete_domain(domain_id: int, user_id: Optional[str] = Query(None)):
             cursor.execute("SELECT COUNT(*) FROM domains WHERE id = %s AND created_by = %s", (domain_id, user_id))
             count = cursor.fetchone()[0]
             if count == 0:
-                return {"success": False, "message": "❌ Bu domain sizin hesabınıza ait değil veya bulunamadı."}
+                error_response = {"success": False, "message": "❌ Bu domain sizin hesabınıza ait değil veya bulunamadı."}
+                
+                # Log kaydet
+                APILogger.log_operation(
+                    endpoint="/delete_domain",
+                    method="DELETE",
+                    operation_type="domain",
+                    user_id=user_id,
+                    domain_id=domain_id,
+                    response_data=error_response,
+                    success=False,
+                    error_message="Domain erişim yetkisi yok"
+                )
+                
+                return error_response
         
         # Domain kullanıcıya aitse veya admin ise silme işlemi yap
         cursor.execute("DELETE FROM domains WHERE id = %s", (domain_id,))
         conn.commit()
         conn.close()
-        return {"success": True, "message": "✅ Domain silindi"}
+        
+        response = {"success": True, "message": "✅ Domain silindi"}
+        
+        # Başarılı log kaydet
+        APILogger.log_operation(
+            endpoint="/delete_domain",
+            method="DELETE",
+            operation_type="domain",
+            user_id=user_id,
+            domain_id=domain_id,
+            response_data=response,
+            success=True
+        )
+        
+        return response
+        
     except Exception as e:
-        return {"success": False, "message": f"❌ Silme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Silme hatası: {e}"}
+        
+        # Hata log'u kaydet
+        APILogger.log_operation(
+            endpoint="/delete_domain",
+            method="DELETE",
+            operation_type="domain",
+            user_id=user_id,
+            domain_id=domain_id,
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Domain'deki kullanıcıları listeleme
 @router.get("/list_users_by_domain/{domain_id}")
@@ -411,7 +562,7 @@ def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateReq
             conn.close()
             
             if user:
-                return {
+                response = {
                     "success": True,
                     "message": message,
                     "user": {
@@ -425,12 +576,50 @@ def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateReq
                     }
                 }
             else:
-                return {"success": True, "message": message}
+                response = {"success": True, "message": message}
+            
+            # Log kaydet
+            APILogger.log_operation(
+                endpoint="/update_user",
+                method="PUT",
+                domain_id=domain_id,
+                request_data=user_data.dict(),
+                response_data=response,
+                success=True
+            )
+            
+            return response
         else:
-            return {"success": False, "message": message}
+            error_response = {"success": False, "message": message}
+            
+            # Hata log'u kaydet
+            APILogger.log_operation(
+                endpoint="/update_user",
+                method="PUT",
+                domain_id=domain_id,
+                request_data=user_data.dict(),
+                response_data=error_response,
+                success=False,
+                error_message=message
+            )
+            
+            return error_response
     except Exception as e:
         print(f"❌ Güncelleme hatası: {e}")
-        return {"success": False, "message": f"❌ Güncelleme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Güncelleme hatası: {e}"}
+        
+        # Exception log'u kaydet
+        APILogger.log_operation(
+            endpoint="/update_user",
+            method="PUT",
+            domain_id=domain_id,
+            request_data=user_data.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Departmanları listeleme
 @router.get("/list_departments")
@@ -530,7 +719,7 @@ def add_department_endpoint(department: DepartmentCreateRequest):
         )
         
         if success:
-            return {
+            response = {
                 "success": True, 
                 "message": message,
                 "department": {
@@ -539,11 +728,49 @@ def add_department_endpoint(department: DepartmentCreateRequest):
                     "domain_id": department.domain_id
                 }
             }
+            
+            # Log kaydet
+            APILogger.log_operation(
+                endpoint="/add_department",
+                method="POST",
+                user_id=department.created_by,
+                request_data=department.dict(),
+                response_data=response,
+                success=True
+            )
+            
+            return response
         else:
-            return {"success": False, "message": message}
+            error_response = {"success": False, "message": message}
+            
+            # Hata log'u kaydet
+            APILogger.log_operation(
+                endpoint="/add_department",
+                method="POST",
+                user_id=department.created_by,
+                request_data=department.dict(),
+                response_data=error_response,
+                success=False,
+                error_message=message
+            )
+            
+            return error_response
     except Exception as e:
         print(f"❌ Departman ekleme hatası: {e}")
-        return {"success": False, "message": f"❌ Departman ekleme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Departman ekleme hatası: {e}"}
+        
+        # Exception log'u kaydet
+        APILogger.log_operation(
+            endpoint="/add_department",
+            method="POST",
+            user_id=department.created_by,
+            request_data=department.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Departman güncelleme
 @router.put("/update_department/{domain_id}/{department_id}", 
@@ -576,7 +803,7 @@ def update_department_endpoint(domain_id: int, department_id: int, department: D
         )
         
         if success:
-            return {
+            response = {
                 "success": True, 
                 "message": message,
                 "department": {
@@ -585,11 +812,49 @@ def update_department_endpoint(domain_id: int, department_id: int, department: D
                     "domain_id": domain_id
                 }
             }
+            
+            # Log kaydet
+            APILogger.log_operation(
+                endpoint="/update_department",
+                method="PUT",
+                user_id=user_id,
+                request_data=department.dict(),
+                response_data=response,
+                success=True
+            )
+            
+            return response
         else:
-            return {"success": False, "message": message}
+            error_response = {"success": False, "message": message}
+            
+            # Hata log'u kaydet
+            APILogger.log_operation(
+                endpoint="/update_department",
+                method="PUT",
+                user_id=user_id,
+                request_data=department.dict(),
+                response_data=error_response,
+                success=False,
+                error_message=message
+            )
+            
+            return error_response
     except Exception as e:
         print(f"❌ Departman güncelleme hatası: {e}")
-        return {"success": False, "message": f"❌ Departman güncelleme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Departman güncelleme hatası: {e}"}
+        
+        # Exception log'u kaydet
+        APILogger.log_operation(
+            endpoint="/update_department",
+            method="PUT",
+            user_id=user_id,
+            request_data=department.dict(),
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 Departman silme
 @router.delete("/delete_department/{domain_id}/{department_id}", 
@@ -621,12 +886,50 @@ def delete_department_endpoint(domain_id: int, department_id: int,
         )
         
         if success:
-            return {"success": True, "message": message}
+            response = {"success": True, "message": message}
+            
+            # Log kaydet
+            APILogger.log_operation(
+                endpoint="/delete_department",
+                method="DELETE",
+                user_id=user_id,
+                request_data={"domain_id": domain_id, "department_id": department_id},
+                response_data=response,
+                success=True
+            )
+            
+            return response
         else:
-            return {"success": False, "message": message}
+            error_response = {"success": False, "message": message}
+            
+            # Hata log'u kaydet
+            APILogger.log_operation(
+                endpoint="/delete_department",
+                method="DELETE",
+                user_id=user_id,
+                request_data={"domain_id": domain_id, "department_id": department_id},
+                response_data=error_response,
+                success=False,
+                error_message=message
+            )
+            
+            return error_response
     except Exception as e:
         print(f"❌ Departman silme hatası: {e}")
-        return {"success": False, "message": f"❌ Departman silme hatası: {e}"}
+        error_response = {"success": False, "message": f"❌ Departman silme hatası: {e}"}
+        
+        # Exception log'u kaydet
+        APILogger.log_operation(
+            endpoint="/delete_department",
+            method="DELETE",
+            user_id=user_id,
+            request_data={"domain_id": domain_id, "department_id": department_id},
+            response_data=error_response,
+            success=False,
+            error_message=str(e)
+        )
+        
+        return error_response
 
 # 📌 IP benzersizlik kontrol fonksiyonu
 def check_user_ip_exists(domain_ip: str, created_by: str):
