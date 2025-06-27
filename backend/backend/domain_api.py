@@ -534,7 +534,7 @@ class UserUpdateRequest(BaseModel):
 
 # 📌 Kullanıcı güncelleme
 @router.put("/update_user/{domain_id}/{username}")
-def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateRequest):
+def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateRequest, user_id: Optional[str] = Query(None)):
     try:
         from user_ops import update_user
         
@@ -582,6 +582,8 @@ def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateReq
             APILogger.log_operation(
                 endpoint="/update_user",
                 method="PUT",
+                operation_type="user",
+                user_id=user_id,
                 domain_id=domain_id,
                 request_data=user_data.dict(),
                 response_data=response,
@@ -596,6 +598,8 @@ def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateReq
             APILogger.log_operation(
                 endpoint="/update_user",
                 method="PUT",
+                operation_type="user",
+                user_id=user_id,
                 domain_id=domain_id,
                 request_data=user_data.dict(),
                 response_data=error_response,
@@ -612,6 +616,8 @@ def update_user_endpoint(domain_id: int, username: str, user_data: UserUpdateReq
         APILogger.log_operation(
             endpoint="/update_user",
             method="PUT",
+            operation_type="user",
+            user_id=user_id,
             domain_id=domain_id,
             request_data=user_data.dict(),
             response_data=error_response,

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import AuthService from "../services/AuthService";
 import supabase from "../supabase/SupabaseClient";
 
@@ -8,14 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Function to clear auth state
+  const clearAuthState = () => {
+    setUser(null);
+    localStorage.removeItem("odie-supabase-auth-token");
+  };
+
   useEffect(() => {
     // Check for existing session on mount
     const checkSession = async () => {
       try {
-        const { data } = await AuthService.getSession();
-        setUser(data.session?.user || null);
+        const { data, error } = await AuthService.getSession();
+
+        if (error) {
+          console.error("Session check error:", error);
+          // If there's an auth error, clear the session
+          if (
+            error.message?.includes("refresh_token") ||
+            error.message?.includes("Invalid")
+          ) {
+            clearAuthState();
+            await supabase.auth.signOut();
+          }
+        } else {
+          setUser(data.session?.user || null);
+        }
       } catch (error) {
         console.error("Session check error:", error);
+        clearAuthState();
       } finally {
         setLoading(false);
       }
@@ -25,8 +45,17 @@ export const AuthProvider = ({ children }) => {
 
     // Subscribe to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
+      async (event, session) => {
+        if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+          if (event === "SIGNED_OUT") {
+            clearAuthState();
+          } else {
+            setUser(session?.user || null);
+          }
+        } else if (event === "SIGNED_IN") {
+          setUser(session?.user || null);
+        }
+
         setLoading(false);
       }
     );
@@ -43,6 +72,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated: !!user,
+    clearAuthState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

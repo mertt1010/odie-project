@@ -42,6 +42,34 @@ const AuthService = {
   getSession: async () => {
     return await supabase.auth.getSession();
   },
+
+  /**
+   * Refresh the current session
+   * @returns {Promise} - Supabase response
+   */
+  refreshSession: async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error("Refresh token error:", error);
+        // If refresh fails, sign out the user
+        await AuthService.signOut();
+        throw error;
+      }
+      return { data, error: null };
+    } catch (error) {
+      console.error("Session refresh failed:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Clear all authentication data
+   */
+  clearAuth: () => {
+    localStorage.removeItem("odie-supabase-auth-token");
+    localStorage.removeItem("sb-zdgklkzmqwkkczhqishq-auth-token");
+  },
 };
 
 export default AuthService;

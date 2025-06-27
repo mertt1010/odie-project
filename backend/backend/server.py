@@ -17,14 +17,17 @@ class UserCreateRequest(BaseModel):
     role_id: UserRole
     department_id: Optional[int] = None
     domain_id: int
+    created_by: Optional[str] = None  # Kullanıcı UUID bilgisi
 
 class UserDisableRequest(BaseModel):
     username: str
     domain_id: int
+    user_id: Optional[str] = None  # İşlemi yapan kullanıcının UUID'si
 
 class UserDeleteRequest(BaseModel):
     username: str
     domain_id: int
+    user_id: Optional[str] = None  # İşlemi yapan kullanıcının UUID'si
 
 # 👇 Kullanıcı Ekleme
 @app.post("/add_user")
@@ -37,7 +40,8 @@ def api_add_user(user: UserCreateRequest):
             last_name=user.last_name,
             password=user.password,
             role_id=user.role_id.value,  # Enum değerini tamsayıya dönüştür
-            department_id=user.department_id
+            department_id=user.department_id,
+            created_by=user.created_by
         )
         
         response = {"success": success, "status": status}
@@ -47,6 +51,7 @@ def api_add_user(user: UserCreateRequest):
             endpoint="/add_user",
             method="POST",
             operation_type="user",
+            user_id=user.created_by,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=response,
@@ -64,6 +69,7 @@ def api_add_user(user: UserCreateRequest):
             endpoint="/add_user",
             method="POST",
             operation_type="user",
+            user_id=user.created_by,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=error_response,
@@ -85,6 +91,7 @@ def api_disable_user(user: UserDisableRequest):
             endpoint="/disable_user",
             method="POST",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=response,
@@ -101,6 +108,7 @@ def api_disable_user(user: UserDisableRequest):
             endpoint="/disable_user",
             method="POST",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=error_response,
@@ -122,6 +130,7 @@ def api_enable_user(user: UserDisableRequest):
             endpoint="/enable_user",
             method="POST",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=response,
@@ -138,6 +147,7 @@ def api_enable_user(user: UserDisableRequest):
             endpoint="/enable_user",
             method="POST",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=error_response,
@@ -159,6 +169,7 @@ def api_delete_user(user: UserDeleteRequest):
             endpoint="/delete_user",
             method="DELETE",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=response,
@@ -175,6 +186,7 @@ def api_delete_user(user: UserDeleteRequest):
             endpoint="/delete_user",
             method="DELETE",
             operation_type="user",
+            user_id=user.user_id,
             domain_id=user.domain_id,
             request_data=user.dict(),
             response_data=error_response,
@@ -238,7 +250,7 @@ def list_users_by_department(department: dict = Body(...)):
         return error_response
 
 # 📊 Log görüntüleme endpoint'i (GET işlemi - loglanmaz)
-@app.get("/api/logs")
+@app.get("/logs")
 def get_api_logs(
     user_id: Optional[str] = Query(None, description="Kullanıcı ID'si filtresi"),
     endpoint: Optional[str] = Query(None, description="Endpoint filtresi"),

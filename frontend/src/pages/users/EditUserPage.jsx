@@ -119,7 +119,12 @@ function EditUserPage() {
         department_id: formData.department_id,
       };
 
-      await DomainService.updateUser(parseInt(domainId), username, submitData);
+      await DomainService.updateUser(
+        parseInt(domainId),
+        username,
+        submitData,
+        user.id
+      );
 
       // Navigate back to users page on success
       navigate("/users");
@@ -141,7 +146,7 @@ function EditUserPage() {
     setError(null);
 
     try {
-      await DomainService.deleteUser(username, parseInt(domainId));
+      await DomainService.deleteUser(username, parseInt(domainId), user.id);
 
       // Navigate back to users page on success
       navigate("/users");
@@ -164,7 +169,7 @@ function EditUserPage() {
     setError(null);
 
     try {
-      await DomainService.enableUser(username, parseInt(domainId));
+      await DomainService.enableUser(username, parseInt(domainId), user.id);
 
       // Update the original user status locally
       setOriginalUser((prev) => ({ ...prev, status: "devrede" }));
@@ -187,7 +192,7 @@ function EditUserPage() {
     setError(null);
 
     try {
-      await DomainService.disableUser(username, parseInt(domainId));
+      await DomainService.disableUser(username, parseInt(domainId), user.id);
 
       // Update the original user status locally
       setOriginalUser((prev) => ({ ...prev, status: "devre dışı" }));

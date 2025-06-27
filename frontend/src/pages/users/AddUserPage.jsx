@@ -94,7 +94,7 @@ function AddUserPage() {
         domain_id: formData.domain_id,
       };
 
-      await DomainService.addUser(submitData);
+      await DomainService.addUser(submitData, user.id);
 
       // Navigate back to users page on success
       navigate("/users");

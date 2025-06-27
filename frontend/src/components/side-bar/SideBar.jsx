@@ -29,6 +29,7 @@ function SideBar() {
       return "Domains";
     if (location.pathname.startsWith("/users")) return "Users";
     if (location.pathname.startsWith("/departments")) return "Departments";
+    if (location.pathname.startsWith("/logs")) return "Logs";
     return "";
   };
 
@@ -94,6 +95,19 @@ function SideBar() {
                 isActive("/departments")
                   ? "bi bi-building-fill"
                   : "bi bi-building"
+              }`}
+            ></i>
+          </Link>
+
+          <Link
+            to="/logs"
+            className="text-odie w-full h-[72px] text-[32px] flex justify-center items-center border-b border-gray-300 hover:bg-gray-100"
+          >
+            <i
+              className={`${
+                isActive("/logs")
+                  ? "bi bi-clipboard-data-fill"
+                  : "bi bi-clipboard-data"
               }`}
             ></i>
           </Link>
@@ -163,6 +177,21 @@ function SideBar() {
               } mr-3`}
             ></i>
             <span>Departments</span>
+          </Link>
+
+          <Link
+            to="/logs"
+            className="text-odie w-full h-16 text-xl flex items-center px-6 border-b border-gray-100 hover:bg-gray-50"
+            onClick={() => setIsOpen(false)}
+          >
+            <i
+              className={`${
+                isActive("/logs")
+                  ? "bi bi-clipboard-data-fill"
+                  : "bi bi-clipboard-data"
+              } mr-3`}
+            ></i>
+            <span>Logs</span>
           </Link>
 
           {isAuthenticated && (

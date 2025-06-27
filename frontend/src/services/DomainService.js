@@ -186,16 +186,22 @@ const DomainService = {
   /**
    * Add a new user to a domain
    * @param {Object} userData - The user data to create
+   * @param {string} createdBy - The user ID who is creating this user
    * @returns {Promise} - API response
    */
-  addUser: async (userData) => {
+  addUser: async (userData, createdBy) => {
     try {
+      const submitData = {
+        ...userData,
+        created_by: createdBy,
+      };
+
       const response = await fetch(`${API_BASE_URL}/add_user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
@@ -216,9 +222,10 @@ const DomainService = {
    * Enable a user in a domain
    * @param {string} username - The username to enable
    * @param {number} domainId - The domain ID
+   * @param {string} userId - The user ID performing this action
    * @returns {Promise} - API response
    */
-  enableUser: async (username, domainId) => {
+  enableUser: async (username, domainId, userId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/enable_user`, {
         method: "POST",
@@ -228,6 +235,7 @@ const DomainService = {
         body: JSON.stringify({
           username: username,
           domain_id: domainId,
+          user_id: userId,
         }),
       });
 
@@ -249,9 +257,10 @@ const DomainService = {
    * Disable a user in a domain
    * @param {string} username - The username to disable
    * @param {number} domainId - The domain ID
+   * @param {string} userId - The user ID performing this action
    * @returns {Promise} - API response
    */
-  disableUser: async (username, domainId) => {
+  disableUser: async (username, domainId, userId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/disable_user`, {
         method: "POST",
@@ -261,6 +270,7 @@ const DomainService = {
         body: JSON.stringify({
           username: username,
           domain_id: domainId,
+          user_id: userId,
         }),
       });
 
@@ -283,12 +293,13 @@ const DomainService = {
    * @param {number} domainId - The domain ID
    * @param {string} username - The username to update
    * @param {Object} userData - The updated user data
+   * @param {string} userId - The user ID performing this action
    * @returns {Promise} - API response
    */
-  updateUser: async (domainId, username, userData) => {
+  updateUser: async (domainId, username, userData, userId) => {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/update_user/${domainId}/${username}`,
+        `${API_BASE_URL}/update_user/${domainId}/${username}?user_id=${userId}`,
         {
           method: "PUT",
           headers: {
@@ -316,9 +327,10 @@ const DomainService = {
    * Delete a user from a domain
    * @param {string} username - The username to delete
    * @param {number} domainId - The domain ID
+   * @param {string} userId - The user ID performing this action
    * @returns {Promise} - API response
    */
-  deleteUser: async (username, domainId) => {
+  deleteUser: async (username, domainId, userId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/delete_user`, {
         method: "DELETE",
@@ -328,6 +340,7 @@ const DomainService = {
         body: JSON.stringify({
           username: username,
           domain_id: domainId,
+          user_id: userId,
         }),
       });
 

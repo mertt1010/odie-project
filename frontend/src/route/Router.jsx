@@ -7,6 +7,7 @@ import EditUserPage from "../pages/users/EditUserPage";
 import DepartmentsPage from "../pages/departments/DepartmentsPage";
 import AddDepartmentPage from "../pages/departments/AddDepartmentPage";
 import EditDepartmentPage from "../pages/departments/EditDepartmentPage";
+import LogsPage from "../pages/logs/LogsPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignupPage from "../pages/auth/SignupPage";
 import LandingPage from "../pages/LandingPage";
@@ -24,6 +25,7 @@ export const RouterList = [
     path: "/departments/edit/:domainId/:departmentId",
     element: <EditDepartmentPage />,
   },
+  { path: "/logs", element: <LogsPage /> },
 ];
 
 export const AuthRoutes = [
