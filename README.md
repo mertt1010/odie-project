@@ -191,27 +191,26 @@ npm run dev
 
 ### Logging Endpoints
 
-| Method | Endpoint        | Description                       |
-| ------ | --------------- | --------------------------------- |
-| GET    | `/logs`         | Retrieve API operation logs       |
-| GET    | `/api/test-log` | Test logging system functionality |
+| Method | Endpoint | Description                 |
+| ------ | -------- | --------------------------- |
+| GET    | `/logs`  | Retrieve API operation logs |
 
 ## 📋 Logging System
 
-ODIE projesi, tüm API işlemlerini otomatik olarak takip eden kapsamlı bir loglama sistemi içerir. Bu sistem, güvenlik, denetim ve hata ayıklama amacıyla kritik işlemleri veritabanında kayıt altına alır.
+ODIE project includes a comprehensive logging system that automatically tracks all API operations. This system records critical operations in the database for security, audit, and debugging purposes.
 
-### 🎯 Loglama Özellikleri
+### 🎯 Logging Features
 
-- **Otomatik Loglama**: POST, PUT, DELETE işlemleri otomatik olarak loglanır
-- **Kapsamlı Kayıt**: Request/response verileri, kullanıcı bilgileri ve zaman damgaları
-- **Kategorize Edilmiş İşlemler**: Domain, user, department, login ve diğer işlem türleri
-- **Hata Takibi**: Başarısız işlemler ve hata mesajları
-- **Filtreleme**: Kullanıcı, endpoint, işlem türü ve zaman bazlı filtreleme
-- **Sayfalama**: Büyük log kayıtları için sayfalama desteği
+- **Automatic Logging**: POST, PUT, DELETE operations are automatically logged
+- **Comprehensive Recording**: Request/response data, user information, and timestamps
+- **Categorized Operations**: Domain, user, department, login, and other operation types
+- **Error Tracking**: Failed operations and error messages
+- **Filtering**: User, endpoint, operation type, and time-based filtering
+- **Pagination**: Pagination support for large log records
 
-### 📊 Log Yapısı
+### 📊 Log Structure
 
-Her log kaydı şu bilgileri içerir:
+Each log record contains the following information:
 
 ```json
 {
@@ -228,7 +227,7 @@ Her log kaydı şu bilgileri içerir:
   },
   "response_data": {
     "success": true,
-    "status": "Kullanıcı başarıyla oluşturuldu"
+    "status": "User successfully created"
   },
   "success": true,
   "error_message": null,
@@ -236,82 +235,82 @@ Her log kaydı şu bilgileri içerir:
 }
 ```
 
-### 📂 İşlem Türleri
+### 📂 Operation Types
 
-- **`domain`**: Domain ekleme, güncelleme, silme işlemleri
-- **`user`**: Kullanıcı yönetimi işlemleri
-- **`department`**: Departman yönetimi işlemleri
-- **`login`**: Kimlik doğrulama işlemleri
-- **`other`**: Diğer genel işlemler
+- **`domain`**: Domain add, update, delete operations
+- **`user`**: User management operations
+- **`department`**: Department management operations
+- **`login`**: Authentication operations
+- **`other`**: Other general operations
 
-### 🔍 Log Sorgulama
+### 🔍 Log Querying
 
-#### Tüm Logları Getir
+#### Get All Logs
 
 ```bash
 GET /logs?limit=50&offset=0
 ```
 
-#### Belirli Kullanıcının Logları
+#### Specific User's Logs
 
 ```bash
 GET /logs?user_id=user-uuid-123&limit=20
 ```
 
-#### Endpoint Bazlı Filtreleme
+#### Endpoint-Based Filtering
 
 ```bash
 GET /logs?endpoint=add_user&limit=10
 ```
 
-#### İşlem Türü Bazlı Filtreleme
+#### Operation Type-Based Filtering
 
 ```bash
 GET /logs?operation_type=domain&limit=25
 ```
 
-#### Kombinasyon Filtreleri
+#### Combination Filters
 
 ```bash
 GET /logs?user_id=user-uuid&operation_type=user&limit=15&offset=30
 ```
 
-### 🧪 Loglama Sistemini Test Etme
+### 🧪 Testing the Logging System
 
-Loglama sisteminin çalışıp çalışmadığını test etmek için:
+To test if the logging system is working:
 
 ```bash
-# Test endpoint'ini çağır
+# Call the test endpoint
 curl -X GET "http://localhost:8000/api/test-log"
 
-# Test scriptini çalıştır
+# Run the test script
 cd backend/backend
 python test_log_system.py
 ```
 
-### 📈 Log Analizi Örneği
+### 📈 Log Analysis Examples
 
 ```bash
-# Son 24 saatteki tüm başarısız işlemler
+# All failed operations in the last 24 hours
 GET /logs?success=false&limit=100
 
-# Belirli domain'deki tüm user işlemleri
+# All user operations in a specific domain
 GET /logs?operation_type=user&domain_id=1
 
-# Sistemdeki en aktif kullanıcılar
-GET /logs?limit=1000  # Ardından user_id bazlı gruplandırma
+# Most active users in the system
+GET /logs?limit=1000  # Then group by user_id
 ```
 
-### ⚙️ Loglama Konfigürasyonu
+### ⚙️ Logging Configuration
 
-Loglama sistemi `log_system.py` dosyasında yapılandırılabilir:
+The logging system can be configured in `log_system.py`:
 
-- **Otomatik İşlem Türü Belirleme**: Endpoint'e göre otomatik kategorizasyon
-- **Sadece Değişiklik Logları**: GET işlemleri loglanmaz (performans için)
-- **JSON Serileştirme**: Request/response verileri güvenli JSON formatında
-- **Hata Yakalama**: Loglama hatalarının ana işlemi etkilememesi
+- **Automatic Operation Type Detection**: Automatic categorization based on endpoint
+- **Change-Only Logs**: GET operations are not logged (for performance)
+- **JSON Serialization**: Request/response data in secure JSON format
+- **Error Handling**: Logging errors do not affect main operations
 
-### 🔧 Veritabanı Şeması
+### 🔧 Database Schema
 
 ```sql
 CREATE TABLE api_logs (
