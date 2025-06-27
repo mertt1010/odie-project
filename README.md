@@ -46,6 +46,15 @@ ODIE is a full-stack application designed to simplify LDAP/Active Directory mana
 - Real-time data updates
 - Protected routes and authentication flow
 
+### 📋 **Comprehensive Logging System**
+
+- Automatic API operation logging for audit trails
+- Real-time tracking of all CRUD operations
+- Categorized logging by operation type (domain, user, department)
+- Advanced filtering and pagination for log analysis
+- Error tracking and debugging support
+- Database-stored logs with JSON data preservation
+
 ## 🏗️ Architecture
 
 ### **Frontend** (`/frontend`)
@@ -91,6 +100,9 @@ odie-project/
         ├── user_ops.py         # User operations & LDAP
         ├── ldap_handler.py     # LDAP connection management
         ├── db_ops.py           # Database operations
+        ├── log_system.py       # API logging system
+        ├── test_log_system.py  # Logging system tests
+        ├── update_logs.py      # Log update utilities
         └── requirements.txt    # Python dependencies
 ```
 
@@ -176,6 +188,146 @@ npm run dev
 | POST   | `/add_department`                                | Add a new department         |
 | PUT    | `/update_department/{domain_id}/{department_id}` | Update department            |
 | DELETE | `/delete_department/{domain_id}/{department_id}` | Delete department            |
+
+### Logging Endpoints
+
+| Method | Endpoint        | Description                       |
+| ------ | --------------- | --------------------------------- |
+| GET    | `/logs`         | Retrieve API operation logs       |
+| GET    | `/api/test-log` | Test logging system functionality |
+
+## 📋 Logging System
+
+ODIE projesi, tüm API işlemlerini otomatik olarak takip eden kapsamlı bir loglama sistemi içerir. Bu sistem, güvenlik, denetim ve hata ayıklama amacıyla kritik işlemleri veritabanında kayıt altına alır.
+
+### 🎯 Loglama Özellikleri
+
+- **Otomatik Loglama**: POST, PUT, DELETE işlemleri otomatik olarak loglanır
+- **Kapsamlı Kayıt**: Request/response verileri, kullanıcı bilgileri ve zaman damgaları
+- **Kategorize Edilmiş İşlemler**: Domain, user, department, login ve diğer işlem türleri
+- **Hata Takibi**: Başarısız işlemler ve hata mesajları
+- **Filtreleme**: Kullanıcı, endpoint, işlem türü ve zaman bazlı filtreleme
+- **Sayfalama**: Büyük log kayıtları için sayfalama desteği
+
+### 📊 Log Yapısı
+
+Her log kaydı şu bilgileri içerir:
+
+```json
+{
+  "id": 1,
+  "endpoint": "/add_user",
+  "method": "POST",
+  "operation_type": "user",
+  "user_id": "user-uuid-123",
+  "domain_id": 1,
+  "request_data": {
+    "username": "john.doe",
+    "first_name": "John",
+    "role_id": 2
+  },
+  "response_data": {
+    "success": true,
+    "status": "Kullanıcı başarıyla oluşturuldu"
+  },
+  "success": true,
+  "error_message": null,
+  "created_at": "2024-01-15T10:30:45"
+}
+```
+
+### 📂 İşlem Türleri
+
+- **`domain`**: Domain ekleme, güncelleme, silme işlemleri
+- **`user`**: Kullanıcı yönetimi işlemleri
+- **`department`**: Departman yönetimi işlemleri
+- **`login`**: Kimlik doğrulama işlemleri
+- **`other`**: Diğer genel işlemler
+
+### 🔍 Log Sorgulama
+
+#### Tüm Logları Getir
+
+```bash
+GET /logs?limit=50&offset=0
+```
+
+#### Belirli Kullanıcının Logları
+
+```bash
+GET /logs?user_id=user-uuid-123&limit=20
+```
+
+#### Endpoint Bazlı Filtreleme
+
+```bash
+GET /logs?endpoint=add_user&limit=10
+```
+
+#### İşlem Türü Bazlı Filtreleme
+
+```bash
+GET /logs?operation_type=domain&limit=25
+```
+
+#### Kombinasyon Filtreleri
+
+```bash
+GET /logs?user_id=user-uuid&operation_type=user&limit=15&offset=30
+```
+
+### 🧪 Loglama Sistemini Test Etme
+
+Loglama sisteminin çalışıp çalışmadığını test etmek için:
+
+```bash
+# Test endpoint'ini çağır
+curl -X GET "http://localhost:8000/api/test-log"
+
+# Test scriptini çalıştır
+cd backend/backend
+python test_log_system.py
+```
+
+### 📈 Log Analizi Örneği
+
+```bash
+# Son 24 saatteki tüm başarısız işlemler
+GET /logs?success=false&limit=100
+
+# Belirli domain'deki tüm user işlemleri
+GET /logs?operation_type=user&domain_id=1
+
+# Sistemdeki en aktif kullanıcılar
+GET /logs?limit=1000  # Ardından user_id bazlı gruplandırma
+```
+
+### ⚙️ Loglama Konfigürasyonu
+
+Loglama sistemi `log_system.py` dosyasında yapılandırılabilir:
+
+- **Otomatik İşlem Türü Belirleme**: Endpoint'e göre otomatik kategorizasyon
+- **Sadece Değişiklik Logları**: GET işlemleri loglanmaz (performans için)
+- **JSON Serileştirme**: Request/response verileri güvenli JSON formatında
+- **Hata Yakalama**: Loglama hatalarının ana işlemi etkilememesi
+
+### 🔧 Veritabanı Şeması
+
+```sql
+CREATE TABLE api_logs (
+    id SERIAL PRIMARY KEY,
+    endpoint VARCHAR(255) NOT NULL,
+    method VARCHAR(10) NOT NULL,
+    operation_type VARCHAR(50),
+    user_id VARCHAR(255),
+    domain_id INTEGER,
+    request_data JSONB,
+    response_data JSONB,
+    success BOOLEAN DEFAULT true,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ## 🎯 Usage Examples
 
